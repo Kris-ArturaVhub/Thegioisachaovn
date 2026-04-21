@@ -31,7 +31,7 @@ body::before {
   position: relative;
   z-index: 1;
   width: 90%;
-  max-width: 1000px;
+  max-width: 700px;
   padding: 25px;
 
   background: rgba(255,255,255,0.1);
@@ -135,7 +135,7 @@ body::before {
 .read-btn {
   display: inline-block;
   margin-top: 13px;
-  padding: 8px 20px;
+  padding: 15px 30px;
   background: cyan;
   color: black;
   border-radius: 6px;
@@ -171,7 +171,9 @@ body::before {
     transform: translate(100%, 100%) rotate(25deg);
   }
 }
-
+colo1 {
+  color: black;
+}
 </style>
 </head>
 
@@ -184,7 +186,7 @@ body::before {
   <div class="grid">
 
     <!-- CARD 1 -->
-    <div class="card shine" onclick="toggle(this)">
+    <div class="card shine colo1" onclick="toggle(this)">
       <div class="badges">
         <span class="badge new">NEW</span>
         <span class="badge hot">HOT</span>
