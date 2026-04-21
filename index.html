@@ -1,135 +1,249 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>My Website</title>
+<meta charset="UTF-8">
+<title>VIP UI</title>
 
-  <style>
-    /* ===== Reset + Body ===== */
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: url("1cd3124a89f9b5fdc7a8aee2bbea4926.png") no-repeat center/cover;
-      min-height: 100vh;
+<style>
+/* ===== BODY ===== */
+body {
+  margin: 0;
+  font-family: Arial;
+  background: url("1cd3124a89f9b5fdc7a8aee2bbea4926.png") no-repeat center/cover;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
 
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+/* overlay nền */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+}
 
-    /* ===== Container ===== */
-    .container {
-      background: rgba(255,255,255,0.95); /* hơi trong suốt cho đẹp */
-      width: 90%;
-      max-width: 500px; /* ❗ sửa từ 5000px → hợp lý */
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      text-align: center;
-    }
+/* ===== CONTAINER ===== */
+.container {
+  position: relative;
+  z-index: 1;
+  width: 90%;
+  max-width: 500px;
+  padding: 25px;
 
-    h1 {
-      margin-bottom: 10px;
-    }
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(15px);
 
-    p {
-      color: gray;
-      margin-bottom: 20px;
-    }
+  border-radius: 20px;
+  color: white;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  text-align: center;
+}
 
-    /* ===== Grid ===== */
-    .grid {
-      display: grid;
-      gap: 12px;
-    }
+/* ===== GRID ===== */
+.grid {
+  display: grid;
+  gap: 12px;
+}
 
-    /* ===== Card ===== */
-    .card {
-      background: #f0f0f0;
-      padding: 12px;
-      border-radius: 10px;
-      text-decoration: none;
-      color: black;
-      font-weight: bold;
+/* ===== CARD ===== */
+.card {
+  background: rgba(255,255,255,0.15);
+  padding: 15px;
+  border-radius: 15px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: 0.3s;
+}
 
-      position: relative;
-      overflow: hidden;
+/* ===== BADGE GROUP (quan trọng) ===== */
+.badges {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: flex;
+  gap: 5px; /* khoảng cách giữa badge */
+}
 
-      transition: 0.2s;
-    }
+/* ===== BADGE CHUNG ===== */
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: bold;
+  color: white;
+}
 
-    .card:active {
-      transform: scale(0.97); /* hiệu ứng bấm mobile */
-    }
+/* NEW */
+.badge.new {
+  background: red;
+}
 
-    /* ===== Shine (chỉ card có class shine) ===== */
-    .shine::before {
-      content: "";
-      position: absolute;
-      top: -100%;
-      left: -100%;
-      width: 200%;
-      height: 200%;
+/* HOT */
+.badge.hot {
+  background: orange;
+  animation: pulse 1s infinite;
+}
 
-      background: linear-gradient(
-        120deg,
-        transparent 40%,
-        rgba(255,255,255,0.5) 50%,
-        transparent 60%
-      );
+/* VIP (cầu vồng) */
+.badge.vip {
+  background: linear-gradient(
+    45deg,
+    red, orange, yellow, green, cyan, blue, violet
+  );
+  background-size: 300%;
+  animation: rainbow 3s linear infinite;
+  color: black;
+}
 
-      transform: rotate(25deg);
-      animation: shine 2.5s linear infinite;
-    }
+/* ===== ANIMATION ===== */
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
 
-    @keyframes shine {
-      from {
-        transform: translate(-100%, -100%) rotate(25deg);
-      }
-      to {
-        transform: translate(100%, 100%) rotate(25deg);
-      }
-    }
+@keyframes rainbow {
+  0% { background-position: 0% }
+  100% { background-position: 100% }
+}
 
-    /* ===== Badge NEW ===== */
-    .new::after {
-      content: "NEW";
-      position: absolute;
-      top: 8px;
-      right: 10px;
+/* ===== EXPAND ===== */
+.card.active {
+  transform: scale(1.05);
+  background: rgba(255,255,255,0.25);
+}
 
-      background: red;
-      color: white;
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 6px;
+/* ===== DESC ===== */
+.desc {
+  max-height: 0;
+  overflow: hidden;
+  transition: 0.3s;
+  font-size: 14px;
+}
 
-      font-weight: bold;
+.card.active .desc {
+  max-height: 100px;
+  margin-top: 10px;
+}
 
-      animation: blink 1.2s infinite;
-    }
+/* ===== BUTTON ===== */
+.read-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: cyan;
+  color: black;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+}
 
-    @keyframes blink {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
+/* ===== SHINE ===== */
+.shine::before {
+  content: "";
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 200%;
+  height: 200%;
 
-  </style>
+  background: linear-gradient(
+    120deg,
+    transparent 40%,
+    rgba(255,255,255,0.4) 50%,
+    transparent 60%
+  );
+
+  transform: rotate(25deg);
+  animation: shine 3s linear infinite;
+}
+
+@keyframes shine {
+  from {
+    transform: translate(-100%, -100%) rotate(25deg);
+  }
+  to {
+    transform: translate(100%, 100%) rotate(25deg);
+  }
+}
+
+</style>
 </head>
 
 <body>
 
-  <div class="container">
-    <h1>Thế giới sách ảo Việt Nam</h1>
-    <p>Chọn sách bên dưới:</p>
+<div class="container">
+  <h2>📚 Thế giới sách ảo</h2>
+  <p>Chọn sách:</p>
 
-    <div class="grid">
-      <a href="page1.html" class="card shine new">Thế giới mới - Truyện ngắn</a>
-      <a href="page2.html" class="card">Tên 2</a>
-      <a href="page3.html" class="card">Tên 3</a>
-      <a href="page4.html" class="card">Tên 4</a>
+  <div class="grid">
+
+    <!-- CARD 1 -->
+    <div class="card shine" onclick="toggle(this)">
+      <div class="badges">
+        <span class="badge new">NEW</span>
+        <span class="badge hot">HOT</span>
+        <span class="badge vip">VIP</span>
+      </div>
+      Thế giới mới - Truyện ngắn 
+      <div class="desc">
+        văn bản 1 với đề tài là hình ảnh thiên nhiên và con người 
+        <br>
+        <a href="page1.html" class="read-btn">Đọc</a>
+      </div>
     </div>
+
+    <!-- CARD 2 -->
+    <div class="card" onclick="toggle(this)">
+      <div class="badges">
+        <span class="badge hot">HOT</span>
+      </div>
+      sắp có...
+      <div class="desc">
+        Mô tả...
+        <br>
+        <a href="page2.html" class="read-btn">Đọc</a>
+      </div>
+    </div>
+
+    <!-- CARD 3 -->
+    <div class="card" onclick="toggle(this)">
+      <div class="badges">
+        <span class="badge vip">VIP</span>
+      </div>
+      sắp có...
+      <div class="desc">
+        Mô tả...
+        <br>
+        <a href="page3.html" class="read-btn">Đọc</a>
+      </div>
+    </div>
+
+    <!-- CARD 4 -->
+    <div class="card" onclick="toggle(this)">
+        sắp có...
+      <div class="desc">
+        Mô tả...
+        <br>
+        <a href="page4.html" class="read-btn">Đọc</a>
+      </div>
+    </div>
+
   </div>
+</div>
+
+<script>
+function toggle(card) {
+  document.querySelectorAll(".card").forEach(c => {
+    if (c !== card) c.classList.remove("active");
+  });
+  card.classList.toggle("active");
+}
+</script>
 
 </body>
 </html>
