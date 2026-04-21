@@ -48,6 +48,8 @@
     .card {
       background: #f0f0f0;
       padding: 15px;
+      position: relative;
+      overflow: hidden;
       border-radius: 10px;
       cursor: pointer;
       transition: 0.2s;
@@ -58,8 +60,36 @@
 
     .card:hover {
       background: #ddd;
-      transform: scale(1.03);
     }
+    .card::before {
+  content: "";
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 200%;
+  height: 200%;
+
+  background: linear-gradient(
+    120deg,
+    transparent 40%,
+    rgba(255,255,255,0.6) 50%,
+    transparent 60%
+  );
+
+  transform: rotate(25deg);
+
+  animation: shine 2s linear infinite;
+}
+
+@keyframes shine {
+  from {
+    transform: translate(-100%, -100%) rotate(25deg);
+  }
+  to {
+    transform: translate(100%, 100%) rotate(25deg);
+  }
+    }
+    
   </style>
 </head>
 
