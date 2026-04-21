@@ -3,47 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Book UI - Kris Artura Edition</title>
+<title>Book UI - Kris Artura Premium</title>
 
 <style>
   /* =========================================
-     1. CSS BIẾN & CÀI ĐẶT CƠ BẢN
+     I. BIẾN CSS & CÀI ĐẶT GIAO DIỆN
   ========================================= */
   :root {
-    --primary-glow: rgba(255, 255, 255, 0.6);
-    --glass-bg: rgba(255, 255, 255, 0.1);
-    --glass-border: rgba(255, 255, 255, 0.2);
-    --transition-speed: 0.8s;
+    --primary-neon: #00f2ff;
+    --secondary-neon: #00ff88;
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --transition-speed: 0.85s;
+    --glow-shadow: 0 0 15px rgba(0, 242, 255, 0.5);
   }
 
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    -webkit-tap-highlight-color: transparent; 
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    background: #050505;
+    background: #020202;
     overflow: hidden;
     color: white;
+    /* Tối ưu hóa hiệu năng render cho mobile */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* =========================================
-     2. CONTAINER CHÍNH CỦA SÁCH
+     II. CẤU TRÚC SÁCH & TRANG (3D ENGINE)
   ========================================= */
   .book {
     width: 100vw;
     height: 100vh;
     position: relative;
-    perspective: 1200px; 
+    perspective: 1500px; /* Tăng chiều sâu 3D */
     overflow: hidden;
   }
 
-  /* =========================================
-     3. CẤU TRÚC TRANG SÁCH
-  ========================================= */
   .page {
     position: absolute;
     top: 0;
@@ -51,24 +53,22 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    transition: transform var(--transition-speed) cubic-bezier(0.645, 0.045, 0.355, 1),
-                opacity var(--transition-speed) ease-in-out;
+    transition: transform var(--transition-speed) cubic-bezier(0.7, 0, 0.3, 1),
+                opacity var(--transition-speed) ease;
     transform-origin: left center;
     transform-style: preserve-3d;
-    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+    will-change: transform, opacity; /* Tối ưu GPU */
   }
 
+  /* Hiệu ứng lật trang cao cấp */
   .page.flipped {
-    transform: translateX(-100%) rotateY(-30deg) scale(0.85);
+    transform: translateX(-100%) rotateY(-35deg) scale(0.9);
     opacity: 0;
-    pointer-events: none; 
+    pointer-events: none;
   }
-
-  /* Z-index sẽ được tự động gán bằng JS 
-     để hỗ trợ số lượng trang vô hạn */
 
   /* =========================================
-     4. HÌNH NỀN & LỚP PHỦ
+     III. HÌNH NỀN & HIỆU ỨNG VORTEX PARTICLES
   ========================================= */
   .bg {
     position: absolute;
@@ -76,12 +76,13 @@
     height: 100%;
     background-size: cover;
     background-position: center;
-    filter: brightness(0.8) contrast(1.2);
-    transition: transform 5s ease; 
+    filter: brightness(0.7) contrast(1.1);
+    transform: scale(1);
+    transition: transform 8s linear;
   }
 
-  .page:hover .bg {
-    transform: scale(1.05);
+  .page:not(.flipped) .bg {
+    transform: scale(1.1);
   }
 
   .particle-canvas {
@@ -92,168 +93,185 @@
     height: 100%;
     z-index: 5;
     pointer-events: none;
+    opacity: 0.6;
   }
 
   .overlay {
     position: absolute;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-      to bottom, 
-      rgba(0,0,0,0.1) 0%, 
-      rgba(0,0,0,0.8) 100%
-    );
+    background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.8) 100%);
     z-index: 6;
   }
 
   /* =========================================
-     5. NỘI DUNG (CONTENT)
+     IV. NÚT "TRỞ VỀ" ANIMATION ĐẶC BIỆT
+  ========================================= */
+  .back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--primary-neon);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    /* Hiệu ứng bóng đổ Neon */
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Lớp phủ Liquid bên trong nút */
+  .back-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg, 
+      transparent, 
+      rgba(0, 242, 255, 0.4), 
+      transparent
+    );
+    transition: 0.5s;
+  }
+
+  /* Animation khi Hover hoặc Active */
+  .back-btn:hover, .back-btn:active {
+    color: #000;
+    background: var(--primary-neon);
+    box-shadow: 0 0 30px var(--primary-neon);
+    transform: translateY(-2px);
+  }
+
+  .back-btn:hover::before {
+    left: 100%;
+  }
+
+  /* Animation Glitch nhẹ */
+  @keyframes btn-glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+  }
+
+  .back-btn:active {
+    animation: btn-glitch 0.2s infinite;
+  }
+
+  /* =========================================
+     V. CÁC THÀNH PHẦN UI KHÁC
   ========================================= */
   .content {
     position: relative;
     z-index: 10;
-    color: white;
-    padding: 60px 30px 30px;
+    padding: 80px 30px 40px;
     height: 100%;
     display: flex;
     flex-direction: column;
   }
 
   h1 {
-    font-size: 48px;
+    font-size: clamp(32px, 8vw, 48px);
     font-weight: 800;
-    text-shadow: 0 4px 15px rgba(0,0,0,0.9);
-    letter-spacing: 2px;
-    animation: fadeInDown 1s ease-out;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.8);
+    margin-bottom: 20px;
   }
 
-  /* =========================================
-     6. NÚT BẤM VÀ UI CONTROLS
-  ========================================= */
+  .overlay-text {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    padding: 25px;
+    border-radius: 20px;
+    font-size: 18px;
+    line-height: 1.6;
+    margin-top: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+
   .next-btn {
     position: absolute;
     bottom: 40px;
     right: 30px;
-    font-size: 32px;
-    color: white;
-    cursor: pointer;
+    width: 65px;
+    height: 65px;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(10px);
-    width: 60px;
-    height: 60px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
-    animation: pulseGlow 2s infinite;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: var(--glow-shadow);
+    animation: floating 3s ease-in-out infinite;
   }
 
-  .next-btn:hover {
-    background: rgba(255,255,255,0.25);
-    transform: scale(1.1);
-  }
-
-  /* Nút thoát đã được nâng cấp thành nút chứa chữ */
+  /* Nút thoát tự động */
   .close-btn {
     position: absolute;
     top: 20px;
     right: 20px;
-    font-size: 16px;
+    padding: 8px 20px;
+    background: rgba(255, 50, 50, 0.15);
+    border: 1px solid rgba(255, 50, 50, 0.4);
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: bold;
-    cursor: pointer;
-    background: rgba(255, 50, 50, 0.2);
-    border: 1px solid rgba(255, 100, 100, 0.4);
-    backdrop-filter: blur(5px);
-    padding: 8px 18px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.3s;
-    letter-spacing: 1px;
     text-transform: uppercase;
+    backdrop-filter: blur(5px);
   }
 
-  .close-btn:hover {
-    background: rgba(255, 50, 50, 0.6);
-    transform: scale(1.05);
-  }
-
-  .overlay-text {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 22px;
-    line-height: 1.6;
-    text-align: center;
-    background: var(--glass-bg);
-    padding: 20px;
-    border-radius: 15px;
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-border);
-    width: 80%;
-    animation: fadeInUp 1s ease-out 0.3s backwards;
+  @keyframes floating {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
   }
 
   /* =========================================
-     7. THÔNG BÁO (TOAST NOTIFICATION)
+     VI. THÔNG BÁO TOAST (KRIS ARTURA)
   ========================================= */
-  #toast-container {
+  #toast {
     position: fixed;
-    top: -100px;
+    bottom: -100px;
     left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(50,50,50,0.9));
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #00ffcc;
-    padding: 15px 30px;
-    border-radius: 30px;
+    background: #111;
+    border: 1px solid var(--primary-neon);
+    padding: 12px 25px;
+    border-radius: 50px;
+    z-index: 1000;
+    transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: var(--primary-neon);
     font-weight: bold;
-    font-size: 16px;
-    z-index: 9999;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    transition: top 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
   }
 
-  #toast-container.show {
-    top: 40px;
-  }
-
-  /* =========================================
-     8. ANIMATIONS (HIỆU ỨNG CHUYỂN ĐỘNG)
-  ========================================= */
-  @keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translate(-50%, -30px); }
-    to { opacity: 1; transform: translate(-50%, -50%); }
-  }
-
-  @keyframes pulseGlow {
-    0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
-    70% { box-shadow: 0 0 0 15px rgba(255,255,255,0); }
-    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
-  }
+  #toast.active { bottom: 30px; }
 
 </style>
 </head>
 
 <body>
 
-<div id="toast-container">
-  <span>✨</span>
-  <span id="toast-msg">Author: Kris Artura</span>
-</div>
+<div id="toast">Project by Kris Artura ⚡</div>
 
 <div class="book" id="book-container">
 
@@ -263,8 +281,8 @@
     <div class="overlay"></div>
 
     <div class="content">
-      <h1>Thế giới mới</h1>
-      <p style="margin-top:10px; opacity:0.8;">Vuốt sang trái hoặc nhấn nút để tiếp tục</p>
+      <h1>Thế Giới Mới</h1>
+      <p style="opacity: 0.7;">Chạm vào mũi tên hoặc vuốt để khám phá.</p>
       
       <div class="next-btn" onclick="nextPage()">➜</div>
     </div>
@@ -277,12 +295,11 @@
 
     <div class="content">
       <div class="overlay-text">
-        Nội dung chữ ở đây.<br>
-        <span style="font-size: 16px; opacity: 0.7; margin-top: 10px; display: block;">
-          Nút "Thoát" sẽ được tự động thêm vào góc phải trang này bằng mã JS.
-        </span>
+        Hệ thống UI đã được nâng cấp!<br>
+        Mọi trang đều tích hợp nút <b>TRỞ VỀ</b> với hiệu ứng Liquid Glow.<br>
+        <br>
+        Chỉ trang cuối cùng là được giữ sạch sẽ theo yêu cầu.
       </div>
-
       <div class="next-btn" onclick="nextPage()">➜</div>
     </div>
   </div>
@@ -293,177 +310,128 @@
     <div class="overlay"></div>
 
     <div class="content" style="justify-content: center; align-items: center;">
-      <h1 style="text-align:center; margin: 0;">Hoàn Thành</h1>
+      <h1 style="letter-spacing: 10px; margin: 0;">HOÀN THÀNH</h1>
     </div>
   </div>
 
 </div>
-<script>
-  // ==========================================
-  // PHẦN 1: QUẢN LÝ LẬT TRANG & Z-INDEX ĐỘNG
-  // ==========================================
-  const pages = document.querySelectorAll(".page");
-  let currentPageIndex = 0;
 
-  // Tự động sắp xếp z-index để trang 1 luôn ở trên cùng
-  // Điều này giúp bạn thêm bao nhiêu trang tùy thích mà không sợ đè lớp
-  pages.forEach((page, index) => {
-    page.style.zIndex = pages.length - index;
-  });
+<script>
+  /* ==========================================
+     PHẦN 1: QUẢN LÝ TRANG & ĐIỀU HƯỚNG
+  ========================================== */
+  const pages = document.querySelectorAll(".page");
+  let currentPage = 0;
+
+  // Tự động gán Z-Index
+  pages.forEach((p, i) => p.style.zIndex = pages.length - i);
 
   function nextPage() {
-    if (currentPageIndex >= 0 && currentPageIndex < pages.length - 1) {
-      pages[currentPageIndex].classList.add("flipped");
-      currentPageIndex++;
+    if (currentPage < pages.length - 1) {
+      pages[currentPage].classList.add("flipped");
+      currentPage++;
     }
   }
 
   function prevPage() {
-    if (currentPageIndex > 0) {
-      currentPageIndex--;
-      pages[currentPageIndex].classList.remove("flipped");
+    if (currentPage > 0) {
+      currentPage--;
+      pages[currentPage].classList.remove("flipped");
     }
   }
 
-  function goHome() {
-    // Chuyển hướng về trang chủ
-    console.log("Redirecting to index.html...");
-    // window.location.href = "index.html"; 
-    alert("Đang về trang chủ!");
+  function goToURL() {
+    // Thực hiện URL 'index.html'
+    window.location.href = "index.html";
   }
 
-  // ==========================================
-  // PHẦN 2: TỰ ĐỘNG THÊM NÚT "THOÁT"
-  // ==========================================
-  // Vòng lặp duyệt qua tất cả các trang
+  /* ==========================================
+     PHẦN 2: TỰ ĐỘNG GẮN NÚT TRỞ VỀ & THOÁT
+  ========================================== */
   pages.forEach((page, index) => {
-    // Nếu KHÔNG PHẢI là trang cuối cùng
+    // Chỉ gắn vào các trang KHÔNG PHẢI trang cuối
     if (index !== pages.length - 1) {
-      const contentDiv = page.querySelector('.content');
-      
-      // Tạo một phần tử div làm nút thoát
+      const content = page.querySelector('.content');
+
+      // 1. Tạo nút TRỞ VỀ (Bên Trái)
+      const backBtn = document.createElement('div');
+      backBtn.className = 'back-btn';
+      backBtn.innerHTML = '<span>Trở về</span>';
+      backBtn.onclick = (e) => {
+        e.stopPropagation(); // Tránh kích hoạt các sự kiện khác
+        goToURL();
+      };
+
+      // 2. Tạo nút THOÁT (Bên Phải)
       const exitBtn = document.createElement('div');
       exitBtn.className = 'close-btn';
       exitBtn.innerText = 'Thoát';
-      exitBtn.onclick = goHome;
-      
-      // Gắn nút thoát vào trong thẻ content
-      contentDiv.appendChild(exitBtn);
+      exitBtn.onclick = goToURL;
+
+      // Gắn vào giao diện
+      content.appendChild(backBtn);
+      content.appendChild(exitBtn);
     }
   });
 
-  // ==========================================
-  // PHẦN 3: THÔNG BÁO (TOAST) AUTHOR
-  // ==========================================
-  function showToast(message) {
-    const toast = document.getElementById("toast-container");
-    const msgElement = document.getElementById("toast-msg");
-    
-    msgElement.innerText = message;
-    toast.classList.add("show");
-    
-    setTimeout(() => {
-      toast.classList.remove("show");
-    }, 3500);
-  }
-
+  /* ==========================================
+     PHẦN 3: HIỆU ỨNG VÀ CẢM ỨNG (MOBILE)
+  ========================================== */
+  // Hiển thị thông báo khi load
   window.onload = () => {
-    showToast("UI Developed by Kris Artura 🚀");
-    initParticles();
+    const t = document.getElementById('toast');
+    setTimeout(() => t.classList.add('active'), 1000);
+    setTimeout(() => t.classList.remove('active'), 5000);
+    initVortex();
   };
 
-  // ==========================================
-  // PHẦN 4: VUỐT CẢM ỨNG (SWIPE GESTURE)
-  // ==========================================
-  let touchStartX = 0;
-  let touchEndX = 0;
-  const swipeThreshold = 50; 
+  // Vuốt màn hình
+  let startX = 0;
+  document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    let diff = startX - e.changedTouches[0].clientX;
+    if (diff > 60) nextPage();
+    if (diff < -60) prevPage();
+  });
 
-  const bookContainer = document.getElementById('book-container');
-
-  bookContainer.addEventListener('touchstart', e => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, {passive: true});
-
-  bookContainer.addEventListener('touchend', e => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-  }, {passive: true});
-
-  function handleSwipe() {
-    let diffX = touchStartX - touchEndX;
-    
-    if (diffX > swipeThreshold) {
-      nextPage();
-    }
-    else if (diffX < -swipeThreshold) {
-      prevPage();
-    }
-  }
-
-  // ==========================================
-  // PHẦN 5: HIỆU ỨNG HẠT (PARTICLES VORTEX)
-  // ==========================================
-  function initParticles() {
+  // Hệ thống hạt (Vortex Particles)
+  function initVortex() {
     const canvases = document.querySelectorAll('.particle-canvas');
-    
     canvases.forEach(canvas => {
       const ctx = canvas.getContext('2d');
-      let width, height;
-      let particlesArray = [];
-      const numberOfParticles = 40; 
+      let w = canvas.width = window.innerWidth;
+      let h = canvas.height = window.innerHeight;
+      let particles = [];
 
-      function resize() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      }
-      window.addEventListener('resize', resize);
-      resize();
-
-      class Particle {
+      class P {
         constructor() {
-          this.x = Math.random() * width;
-          this.y = Math.random() * height;
-          this.size = Math.random() * 2 + 1;
-          this.speedX = Math.random() * 1 - 0.5;
-          this.speedY = Math.random() * 1 - 0.5;
-          this.color = 'rgba(255, 255, 255, 0.5)';
+          this.x = Math.random() * w;
+          this.y = Math.random() * h;
+          this.vx = (Math.random() - 0.5) * 0.8;
+          this.vy = (Math.random() - 0.5) * 0.8;
+          this.s = Math.random() * 2;
         }
-        
-        update() {
-          this.x += this.speedX;
-          this.y += this.speedY;
-
-          if (this.x > width || this.x < 0) this.speedX *= -1;
-          if (this.y > height || this.y < 0) this.speedY *= -1;
-        }
-
         draw() {
-          ctx.fillStyle = this.color;
+          ctx.fillStyle = 'rgba(0, 242, 255, 0.4)';
           ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.arc(this.x, this.y, this.s, 0, Math.PI*2);
           ctx.fill();
         }
-      }
-
-      function init() {
-        particlesArray = [];
-        for (let i = 0; i < numberOfParticles; i++) {
-          particlesArray.push(new Particle());
+        move() {
+          this.x += this.vx;
+          this.y += this.vy;
+          if(this.x<0 || this.x>w) this.vx*=-1;
+          if(this.y<0 || this.y>h) this.vy*=-1;
         }
       }
 
-      function animate() {
-        ctx.clearRect(0, 0, width, height);
-        for (let i = 0; i < particlesArray.length; i++) {
-          particlesArray[i].update();
-          particlesArray[i].draw();
-        }
-        requestAnimationFrame(animate);
+      for(let i=0; i<35; i++) particles.push(new P());
+      function anim() {
+        ctx.clearRect(0,0,w,h);
+        particles.forEach(p => { p.move(); p.draw(); });
+        requestAnimationFrame(anim);
       }
-
-      init();
-      animate();
+      anim();
     });
   }
 </script>
