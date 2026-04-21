@@ -1,10 +1,190 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <title>Page 1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book UI</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+body {
+  background: #111;
+  overflow: hidden;
+}
+
+/* ===== CONTAINER ===== */
+.book {
+  width: 100vw;
+  height: 100vh;
+  perspective: 1500px;
+  position: relative;
+}
+
+/* ===== PAGE ===== */
+.page {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transform-origin: left;
+  transition: transform 1s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+}
+
+/* flip effect */
+.page.flipped {
+  transform: rotateY(-180deg);
+}
+
+/* ===== PAGE 1 ===== */
+.page1 h1 {
+  font-size: 48px;
+  font-weight: bold;
+  color: white;
+}
+
+/* arrow button */
+.next-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  transition: 1s;
+}
+
+.next-btn.show {
+  opacity: 1;
+}
+
+/* ===== PAGE 2 TEXT OVER IMAGE ===== */
+.overlay-text {
+  position: absolute;
+  color: white;
+  font-size: 24px;
+}
+
+/* ===== CLOSE BUTTON ===== */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  color: white;
+  cursor: pointer;
+}
+
+/* ===== LAST PAGE BUTTONS ===== */
+.last-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+}
+
+button {
+  padding: 10px 15px;
+  margin-right: 10px;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+button:hover {
+  background: rgba(255,255,255,0.4);
+}
+</style>
 </head>
+
 <body>
-  <h1>Đây là trang 1</h1>
-  <a href="index.html">Quay lại</a>
+
+<div class="book">
+
+  <!-- ===== PAGE 1 ===== -->
+  <div class="page page1" id="page1" style="background-image:url('bg1.jpg')">
+    <h1>TÊN SÁCH CỦA ANH</h1>
+
+    <div class="next-btn" id="next1">➜</div>
+  </div>
+
+  <!-- ===== PAGE 2 ===== -->
+  <div class="page page2" id="page2" style="background-image:url('img2.jpg')">
+    
+    <div class="close-btn" onclick="goHome()">✖</div>
+
+    <!-- text đè lên ảnh -->
+    <div class="overlay-text" style="top:50%; left:30%;">
+      Nội dung chữ ở đây (anh tự chỉnh vị trí)
+    </div>
+
+    <div class="next-btn" id="next2">➜</div>
+  </div>
+
+  <!-- ===== LAST PAGE ===== -->
+  <div class="page page3" id="page3" style="background-image:url('img3.jpg')">
+
+    <div class="last-controls">
+      <button onclick="goHome()">Trang chủ</button>
+      <button onclick="restart()">Đọc lại</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+let pages = document.querySelectorAll(".page");
+
+/* ===== SHOW ARROW AFTER 10s ===== */
+setTimeout(() => {
+  document.getElementById("next1").classList.add("show");
+}, 10000);
+
+/* ===== PAGE NAVIGATION ===== */
+document.getElementById("next1").onclick = () => {
+  pages[0].classList.add("flipped");
+  document.getElementById("next1").style.display = "none";
+
+  setTimeout(() => {
+    document.getElementById("next2").classList.add("show");
+  }, 1000);
+};
+
+document.getElementById("next2").onclick = () => {
+  pages[1].classList.add("flipped");
+};
+
+/* ===== HOME ===== */
+function goHome() {
+  window.location.href = "index.html";
+}
+
+/* ===== RESTART ===== */
+function restart() {
+  pages.forEach(p => p.classList.remove("flipped"));
+
+  document.getElementById("next1").style.display = "block";
+  document.getElementById("next1").classList.remove("show");
+  document.getElementById("next2").classList.remove("show");
+
+  setTimeout(() => {
+    document.getElementById("next1").classList.add("show");
+  }, 10000);
+}
+</script>
+
 </body>
-</html>
+    </html>
