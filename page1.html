@@ -3,154 +3,336 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Book UI</title>
+<title>Book UI - Premium Edition</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: sans-serif;
-}
+  /* =========================================
+     CSS BIẾN & CÀI ĐẶT CƠ BẢN
+  ========================================= */
+  :root {
+    --primary-glow: rgba(255, 255, 255, 0.6);
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --transition-speed: 0.8s;
+  }
 
-body {
-  background: #111;
-  overflow: hidden;
-}
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    -webkit-tap-highlight-color: transparent; /* Tắt highlight khi chạm trên mobile */
+  }
 
-.book {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-}
+  body {
+    background: #050505;
+    overflow: hidden;
+    color: white;
+  }
 
-/* ===== PAGE ===== */
-.page {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  transition: transform 0.6s ease;
-}
+  /* =========================================
+     CONTAINER CHÍNH CỦA SÁCH
+  ========================================= */
+  .book {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    perspective: 1200px; /* Tạo chiều sâu 3D cho hiệu ứng lật */
+    overflow: hidden;
+  }
 
-.page.flipped {
-  transform: translateX(-100%);
-}
+  /* =========================================
+     CẤU TRÚC TRANG SÁCH
+  ========================================= */
+  .page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /* Hiệu ứng mượt mà khi lật */
+    transition: transform var(--transition-speed) cubic-bezier(0.645, 0.045, 0.355, 1),
+                opacity var(--transition-speed) ease-in-out;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+  }
 
-/* ===== LAYER ===== */
-.bg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-}
+  /* Nâng cấp hiệu ứng lật trang: Xoay 3D, thu nhỏ và mờ dần */
+  .page.flipped {
+    transform: translateX(-100%) rotateY(-30deg) scale(0.85);
+    opacity: 0;
+    pointer-events: none; /* Khóa tương tác khi đã lật */
+  }
 
-.overlay {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.25);
-}
+  /* Thiết lập z-index để trang đầu nằm trên cùng */
+  #page1 { z-index: 3; }
+  #page2 { z-index: 2; }
+  #page3 { z-index: 1; }
 
-/* CONTENT (quan trọng) */
-.content {
-  position: relative;
-  z-index: 10;
-  color: white;
-  padding: 60px 20px 20px;
-}
+  /* =========================================
+     HÌNH NỀN & LỚP PHỦ
+  ========================================= */
+  .bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.8) contrast(1.2);
+    transition: transform 5s ease; /* Hiệu ứng zoom nhẹ */
+  }
 
-/* ===== TITLE ===== */
-h1 {
-  font-size: 42px;
-  text-shadow: 0 0 10px rgba(0,0,0,0.8);
-}
+  .page:hover .bg {
+    transform: scale(1.05);
+  }
 
-/* ===== NÚT ===== */
-.next-btn {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  font-size: 28px;
-  color: white;
-  cursor: pointer;
-}
+  /* Lớp hạt (Particles) bằng Canvas */
+  .particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+  }
 
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 28px;
-  cursor: pointer;
-}
+  .overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom, 
+      rgba(0,0,0,0.1) 0%, 
+      rgba(0,0,0,0.8) 100%
+    );
+    z-index: 6;
+  }
 
-/* ===== TEXT ===== */
-.overlay-text {
-  position: absolute;
-  font-size: 24px;
-}
+  /* =========================================
+     NỘI DUNG (CONTENT)
+  ========================================= */
+  .content {
+    position: relative;
+    z-index: 10;
+    color: white;
+    padding: 60px 30px 30px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
 
-/* ===== LAST ===== */
-.last-controls {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-}
+  h1 {
+    font-size: 48px;
+    font-weight: 800;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.9);
+    letter-spacing: 2px;
+    animation: fadeInDown 1s ease-out;
+  }
 
-button {
-  padding: 10px 15px;
-  margin-right: 10px;
-  border: none;
-  background: rgba(255,255,255,0.2);
-  color: white;
-  border-radius: 8px;
-}
+  /* =========================================
+     NÚT BẤM (BUTTONS) - GLASSMORPHISM
+  ========================================= */
+  .next-btn {
+    position: absolute;
+    bottom: 40px;
+    right: 30px;
+    font-size: 32px;
+    color: white;
+    cursor: pointer;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    animation: pulseGlow 2s infinite;
+  }
+
+  .next-btn:hover {
+    background: rgba(255,255,255,0.25);
+    transform: scale(1.1);
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(5px);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+  }
+
+  .close-btn:hover {
+    background: rgba(255,0,0,0.6);
+    transform: rotate(90deg);
+  }
+
+  .overlay-text {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    line-height: 1.6;
+    text-align: center;
+    background: var(--glass-bg);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    width: 80%;
+    animation: fadeInUp 1s ease-out 0.3s backwards;
+  }
+
+  .last-controls {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  button {
+    padding: 15px 25px;
+    font-size: 16px;
+    font-weight: bold;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+
+  button:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255,255,255,0.2);
+  }
+
+  /* =========================================
+     THÔNG BÁO (TOAST NOTIFICATION)
+  ========================================= */
+  #toast-container {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(50,50,50,0.9));
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #00ffcc;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 16px;
+    z-index: 9999;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: top 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #toast-container.show {
+    top: 40px;
+  }
+
+  /* =========================================
+     ANIMATIONS (HIỆU ỨNG CHUYỂN ĐỘNG)
+  ========================================= */
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translate(-50%, -30px); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+  }
+
+  @keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(255,255,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  }
+
 </style>
 </head>
 
 <body>
 
-<div class="book">
+<div id="toast-container">
+  <span>✨</span>
+  <span id="toast-msg">Author: Kris Artura</span>
+</div>
 
-  <!-- PAGE 1 -->
+<div class="book" id="book-container">
+
   <div class="page" id="page1">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
+    <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
 
     <div class="content">
       <h1>Thế giới mới</h1>
-
-      <!-- nút nằm TRONG content -->
+      <p style="margin-top:10px; opacity:0.8;">Vuốt sang trái hoặc nhấn nút để tiếp tục</p>
+      
       <div class="next-btn" onclick="nextPage(0)">➜</div>
     </div>
   </div>
 
-  <!-- PAGE 2 -->
   <div class="page" id="page2">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
+    <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
 
     <div class="content">
       <div class="close-btn" onclick="goHome()">✖</div>
 
-      <div class="overlay-text" style="top:50%; left:30%;">
-        Nội dung chữ ở đây
+      <div class="overlay-text">
+        Nội dung chữ ở đây.<br>
+        <span style="font-size: 16px; opacity: 0.7; margin-top: 10px; display: block;">
+          Đã được nâng cấp chuẩn siêu vip pro với hiệu ứng Particle và Vuốt (Swipe).
+        </span>
       </div>
 
       <div class="next-btn" onclick="nextPage(1)">➜</div>
     </div>
   </div>
 
-  <!-- PAGE 3 -->
   <div class="page" id="page3">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
+    <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
 
     <div class="content">
+      <h1 style="text-align:center; margin-top: 30%;">Hoàn Thành</h1>
+      
       <div class="last-controls">
-        <button onclick="goHome()">Trang chủ</button>
-        <button onclick="restart()">Đọc lại</button>
+        <button onclick="goHome()">🏠 Trang chủ</button>
+        <button onclick="restart()">↺ Đọc lại</button>
       </div>
     </div>
   </div>
@@ -158,20 +340,160 @@ button {
 </div>
 
 <script>
-let pages = document.querySelectorAll(".page");
+  // ==========================================
+  // PHẦN 1: LOGIC LẬT TRANG CƠ BẢN
+  // ==========================================
+  let pages = document.querySelectorAll(".page");
+  let currentPageIndex = 0;
 
-function nextPage(i) {
-  pages[i].classList.add("flipped");
-}
+  function nextPage(i) {
+    if (i >= 0 && i < pages.length - 1) {
+      pages[i].classList.add("flipped");
+      currentPageIndex = i + 1;
+    }
+  }
 
-function goHome() {
-  window.location.href = "index.html";
-}
+  function prevPage() {
+    if (currentPageIndex > 0) {
+      currentPageIndex--;
+      pages[currentPageIndex].classList.remove("flipped");
+    }
+  }
 
-function restart() {
-  pages.forEach(p => p.classList.remove("flipped"));
-}
+  function goHome() {
+    // Chuyển hướng hoặc báo lỗi nếu không có file index
+    console.log("Redirecting to index.html...");
+    // window.location.href = "index.html"; 
+    alert("Đang về trang chủ!");
+  }
+
+  function restart() {
+    pages.forEach(p => p.classList.remove("flipped"));
+    currentPageIndex = 0;
+    showToast("Đã khởi động lại cuốn sách!");
+  }
+
+  // ==========================================
+  // PHẦN 2: THÔNG BÁO (TOAST) AUTHOR
+  // ==========================================
+  function showToast(message) {
+    const toast = document.getElementById("toast-container");
+    const msgElement = document.getElementById("toast-msg");
+    
+    msgElement.innerText = message;
+    toast.classList.add("show");
+    
+    // Tự động ẩn sau 3.5 giây
+    setTimeout(() => {
+      toast.classList.remove("show");
+    }, 3500);
+  }
+
+  // Khởi chạy khi tải trang
+  window.onload = () => {
+    showToast("UI Developed by Kris Artura 🚀");
+    initParticles();
+  };
+
+  // ==========================================
+  // PHẦN 3: VUỐT CẢM ỨNG (SWIPE GESTURE)
+  // ==========================================
+  let touchStartX = 0;
+  let touchEndX = 0;
+  const swipeThreshold = 50; // Khoảng cách tối thiểu để nhận diện vuốt
+
+  const bookContainer = document.getElementById('book-container');
+
+  bookContainer.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, {passive: true});
+
+  bookContainer.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, {passive: true});
+
+  function handleSwipe() {
+    let diffX = touchStartX - touchEndX;
+    
+    // Vuốt sang trái (Next Page)
+    if (diffX > swipeThreshold) {
+      nextPage(currentPageIndex);
+    }
+    // Vuốt sang phải (Prev Page)
+    else if (diffX < -swipeThreshold) {
+      prevPage();
+    }
+  }
+
+  // ==========================================
+  // PHẦN 4: HIỆU ỨNG HẠT (PARTICLES VORTEX)
+  // ==========================================
+  function initParticles() {
+    const canvases = document.querySelectorAll('.particle-canvas');
+    
+    canvases.forEach(canvas => {
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let particlesArray = [];
+      const numberOfParticles = 40; // Số lượng hạt
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2 + 1;
+          this.speedX = Math.random() * 1 - 0.5;
+          this.speedY = Math.random() * 1 - 0.5;
+          this.color = 'rgba(255, 255, 255, 0.5)';
+        }
+        
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+
+          // Dội lại khi đụng viền
+          if (this.x > width || this.x < 0) this.speedX *= -1;
+          if (this.y > height || this.y < 0) this.speedY *= -1;
+        }
+
+        draw() {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function init() {
+        particlesArray = [];
+        for (let i = 0; i < numberOfParticles; i++) {
+          particlesArray.push(new Particle());
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        for (let i = 0; i < particlesArray.length; i++) {
+          particlesArray[i].update();
+          particlesArray[i].draw();
+        }
+        requestAnimationFrame(animate);
+      }
+
+      init();
+      animate();
+    });
+  }
 </script>
 
 </body>
-</html>
+  </html>
+  
