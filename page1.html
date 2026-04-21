@@ -21,7 +21,6 @@ body {
 .book {
   width: 100vw;
   height: 100vh;
-  perspective: 1500px;
   position: relative;
 }
 
@@ -31,13 +30,11 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  transform-origin: left;
-  transition: transform 1s ease;
+  transition: transform 0.6s ease;
 }
 
-/* lật */
 .page.flipped {
-  transform: rotateY(-180deg);
+  transform: translateX(-100%);
 }
 
 /* ===== LAYER ===== */
@@ -47,7 +44,6 @@ body {
   height: 100%;
   background-size: cover;
   background-position: center;
-  z-index: 1;
 }
 
 .overlay {
@@ -55,12 +51,12 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.25);
-  z-index: 2;
 }
 
+/* CONTENT (quan trọng) */
 .content {
   position: relative;
-  z-index: 3;
+  z-index: 10;
   color: white;
   padding: 60px 20px 20px;
 }
@@ -68,28 +64,19 @@ body {
 /* ===== TITLE ===== */
 h1 {
   font-size: 42px;
-  font-weight: bold;
   text-shadow: 0 0 10px rgba(0,0,0,0.8);
 }
 
-/* ===== BUTTON NEXT ===== */
+/* ===== NÚT ===== */
 .next-btn {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  font-size: 26px;
+  font-size: 28px;
   color: white;
   cursor: pointer;
-  opacity: 0;
-  transition: 1s;
-  z-index: 10;
 }
 
-.next-btn.show {
-  opacity: 1;
-}
-
-/* ===== CLOSE ===== */
 .close-btn {
   position: absolute;
   top: 10px;
@@ -98,7 +85,7 @@ h1 {
   cursor: pointer;
 }
 
-/* ===== TEXT OVER ===== */
+/* ===== TEXT ===== */
 .overlay-text {
   position: absolute;
   font-size: 24px;
@@ -117,18 +104,8 @@ button {
   border: none;
   background: rgba(255,255,255,0.2);
   color: white;
-  cursor: pointer;
   border-radius: 8px;
 }
-
-button:hover {
-  background: rgba(255,255,255,0.4);
-}
-
-/* thứ tự trang */
-#page1 { z-index: 3; }
-#page2 { z-index: 2; }
-#page3 { z-index: 1; }
 </style>
 </head>
 
@@ -143,14 +120,15 @@ button:hover {
 
     <div class="content">
       <h1>Thế giới mới</h1>
-    </div>
 
-    <div class="next-btn" id="next1">➜</div>
+      <!-- nút nằm TRONG content -->
+      <div class="next-btn" onclick="nextPage(0)">➜</div>
+    </div>
   </div>
 
   <!-- PAGE 2 -->
   <div class="page" id="page2">
-    <div class="bg" style="background-image:url('img2.jpg')"></div>
+    <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
     <div class="overlay"></div>
 
     <div class="content">
@@ -159,14 +137,14 @@ button:hover {
       <div class="overlay-text" style="top:50%; left:30%;">
         Nội dung chữ ở đây
       </div>
-    </div>
 
-    <div class="next-btn" id="next2">➜</div>
+      <div class="next-btn" onclick="nextPage(1)">➜</div>
+    </div>
   </div>
 
   <!-- PAGE 3 -->
   <div class="page" id="page3">
-    <div class="bg" style="background-image:url('img3.jpg')"></div>
+    <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
     <div class="overlay"></div>
 
     <div class="content">
@@ -182,43 +160,16 @@ button:hover {
 <script>
 let pages = document.querySelectorAll(".page");
 
-/* hiện nút sau 2s (cho dễ test) */
-setTimeout(() => {
-  document.getElementById("next1").classList.add("show");
-}, 2000);
+function nextPage(i) {
+  pages[i].classList.add("flipped");
+}
 
-/* PAGE 1 -> 2 */
-document.getElementById("next1").onclick = () => {
-  pages[0].classList.add("flipped");
-
-  document.getElementById("next1").style.display = "none";
-
-  setTimeout(() => {
-    document.getElementById("next2").classList.add("show");
-  }, 800);
-};
-
-/* PAGE 2 -> 3 */
-document.getElementById("next2").onclick = () => {
-  pages[1].classList.add("flipped");
-};
-
-/* HOME */
 function goHome() {
   window.location.href = "index.html";
 }
 
-/* RESTART */
 function restart() {
   pages.forEach(p => p.classList.remove("flipped"));
-
-  document.getElementById("next1").style.display = "block";
-  document.getElementById("next1").classList.remove("show");
-  document.getElementById("next2").classList.remove("show");
-
-  setTimeout(() => {
-    document.getElementById("next1").classList.add("show");
-  }, 2000);
 }
 </script>
 
