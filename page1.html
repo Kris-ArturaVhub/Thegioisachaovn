@@ -23,6 +23,7 @@ body {
   height: 100vh;
   perspective: 1500px;
   position: relative;
+  transform-style: preserve-3d;
 }
 
 /* ===== PAGE ===== */
@@ -33,10 +34,13 @@ body {
   overflow: hidden;
   transform-origin: left;
   transition: transform 1s ease;
+  transform-style: preserve-3d; /* thêm */
+  backface-visibility: hidden;  /* thêm */
 }
 
 .page.flipped {
   transform: rotateY(-180deg);
+  z-index: 0;
 }
 
 /* ===== LAYER ===== */
