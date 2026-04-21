@@ -47,7 +47,7 @@
     /* Ô */
     .card {
       background: #f0f0f0;
-      padding: 15px;
+      padding: 5px;
       position: relative;
       overflow: hidden;
       border-radius: 10px;
@@ -58,10 +58,12 @@
       font-weight: bold;
     }
 
-    .card:hover {
-      background: #ddd;
-    }
-    .card::before {
+    .shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine::before {
   content: "";
   position: absolute;
   top: -100%;
@@ -77,9 +79,26 @@
   );
 
   transform: rotate(25deg);
-
   animation: shine 2s linear infinite;
 }
+    .new {
+  position: relative;
+}
+
+.new::after {
+  content: "NEW";
+  position: absolute;
+  top: 8px;
+  right: 10px;
+
+  background: red;
+  color: white;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+
+  font-weight: bold;
+      }
 
 @keyframes shine {
   from {
@@ -100,7 +119,7 @@
     <p> Chọn sách bên dưới: </p>
 
     <div class="grid">
-      <a href="page1.html" class="card"> Thế giới mới - Truyện ngắn</a>
+      <a href="page1.html" class="card shine"> Thế giới mới - Truyện ngắn</a>
       <a href="page2.html" class="card">Tên 2</a>
       <a href="page3.html" class="card">Tên 3</a>
       <a href="page4.html" class="card">Tên 4</a>
