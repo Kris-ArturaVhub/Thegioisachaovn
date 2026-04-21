@@ -134,6 +134,9 @@ button:hover {
 #page1 { z-index: 3; }
 #page2 { z-index: 2; }
 #page3 { z-index: 1; }
+#page2, #page3 {
+  transform: rotateY(180deg);
+}
 </style>
 </head>
 
@@ -194,7 +197,7 @@ setTimeout(() => {
 
 /* chuyển trang */
 document.getElementById("next1").onclick = () => {
-  pages[0].classList.add("flipped");
+  
   document.getElementById("next1").style.display = "none";
 
   setTimeout(() => {
