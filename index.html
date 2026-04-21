@@ -5,29 +5,29 @@
   <title>My Website</title>
 
   <style>
-    /* Nền toàn trang */
+    /* ===== Reset + Body ===== */
     body {
       margin: 0;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       background: url("1cd3124a89f9b5fdc7a8aee2bbea4926.png") no-repeat center/cover;
-      height: 100vh;
+      min-height: 100vh;
+
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
-    /* Khung trắng chính */
+    /* ===== Container ===== */
     .container {
-      background: white;
+      background: rgba(255,255,255,0.95); /* hơi trong suốt cho đẹp */
       width: 90%;
-      max-width: 5000px;
-      padding: 20px;
+      max-width: 500px; /* ❗ sửa từ 5000px → hợp lý */
+      padding: 25px;
       border-radius: 15px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       text-align: center;
     }
 
-    /* Tiêu đề */
     h1 {
       margin-bottom: 10px;
     }
@@ -37,89 +37,94 @@
       margin-bottom: 20px;
     }
 
-    /* Ma trận */
+    /* ===== Grid ===== */
     .grid {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: grid;
+      gap: 12px;
     }
 
-    /* Ô */
+    /* ===== Card ===== */
     .card {
       background: #f0f0f0;
-      padding: 5px;
-      position: relative;
-      overflow: hidden;
+      padding: 12px;
       border-radius: 10px;
-      cursor: pointer;
-      transition: 0.2s;
       text-decoration: none;
       color: black;
       font-weight: bold;
+
+      position: relative;
+      overflow: hidden;
+
+      transition: 0.2s;
     }
 
-    .shine {
-  position: relative;
-  overflow: hidden;
-}
+    .card:active {
+      transform: scale(0.97); /* hiệu ứng bấm mobile */
+    }
 
-.shine::before {
-  content: "";
-  position: absolute;
-  top: -100%;
-  left: -100%;
-  width: 200%;
-  height: 200%;
+    /* ===== Shine (chỉ card có class shine) ===== */
+    .shine::before {
+      content: "";
+      position: absolute;
+      top: -100%;
+      left: -100%;
+      width: 200%;
+      height: 200%;
 
-  background: linear-gradient(
-    120deg,
-    transparent 40%,
-    rgba(255,255,255,0.6) 50%,
-    transparent 60%
-  );
+      background: linear-gradient(
+        120deg,
+        transparent 40%,
+        rgba(255,255,255,0.5) 50%,
+        transparent 60%
+      );
 
-  transform: rotate(25deg);
-  animation: shine 2s linear infinite;
-}
-    .new {
-  position: relative;
-}
+      transform: rotate(25deg);
+      animation: shine 2.5s linear infinite;
+    }
 
-.new::after {
-  content: "NEW";
-  position: absolute;
-  top: 8px;
-  right: 10px;
-
-  background: red;
-  color: white;
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 6px;
-
-  font-weight: bold;
+    @keyframes shine {
+      from {
+        transform: translate(-100%, -100%) rotate(25deg);
       }
-
-@keyframes shine {
-  from {
-    transform: translate(-100%, -100%) rotate(25deg);
-  }
-  to {
-    transform: translate(100%, 100%) rotate(25deg);
-  }
+      to {
+        transform: translate(100%, 100%) rotate(25deg);
+      }
     }
-    
+
+    /* ===== Badge NEW ===== */
+    .new::after {
+      content: "NEW";
+      position: absolute;
+      top: 8px;
+      right: 10px;
+
+      background: red;
+      color: white;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 6px;
+
+      font-weight: bold;
+
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
   </style>
 </head>
 
 <body>
 
   <div class="container">
-    <h1> Thế giới sách ảo Việt Nam </h1>
-    <p> Chọn sách bên dưới: </p>
+    <h1>Thế giới sách ảo Việt Nam</h1>
+    <p>Chọn sách bên dưới:</p>
 
     <div class="grid">
-      <a href="page1.html" class="card shine new"> Thế giới mới - Truyện ngắn</a>
+      <a href="page1.html" class="card shine new">Thế giới mới - Truyện ngắn</a>
       <a href="page2.html" class="card">Tên 2</a>
       <a href="page3.html" class="card">Tên 3</a>
       <a href="page4.html" class="card">Tên 4</a>
