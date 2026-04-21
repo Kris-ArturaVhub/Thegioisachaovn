@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Book UI - Premium Edition</title>
+<title>Book UI - Kris Artura Edition</title>
 
 <style>
   /* =========================================
-     CSS BIẾN & CÀI ĐẶT CƠ BẢN
+     1. CSS BIẾN & CÀI ĐẶT CƠ BẢN
   ========================================= */
   :root {
     --primary-glow: rgba(255, 255, 255, 0.6);
@@ -21,7 +21,7 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    -webkit-tap-highlight-color: transparent; /* Tắt highlight khi chạm trên mobile */
+    -webkit-tap-highlight-color: transparent; 
   }
 
   body {
@@ -31,18 +31,18 @@
   }
 
   /* =========================================
-     CONTAINER CHÍNH CỦA SÁCH
+     2. CONTAINER CHÍNH CỦA SÁCH
   ========================================= */
   .book {
     width: 100vw;
     height: 100vh;
     position: relative;
-    perspective: 1200px; /* Tạo chiều sâu 3D cho hiệu ứng lật */
+    perspective: 1200px; 
     overflow: hidden;
   }
 
   /* =========================================
-     CẤU TRÚC TRANG SÁCH
+     3. CẤU TRÚC TRANG SÁCH
   ========================================= */
   .page {
     position: absolute;
@@ -51,7 +51,6 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    /* Hiệu ứng mượt mà khi lật */
     transition: transform var(--transition-speed) cubic-bezier(0.645, 0.045, 0.355, 1),
                 opacity var(--transition-speed) ease-in-out;
     transform-origin: left center;
@@ -59,20 +58,17 @@
     box-shadow: -5px 0 15px rgba(0,0,0,0.5);
   }
 
-  /* Nâng cấp hiệu ứng lật trang: Xoay 3D, thu nhỏ và mờ dần */
   .page.flipped {
     transform: translateX(-100%) rotateY(-30deg) scale(0.85);
     opacity: 0;
-    pointer-events: none; /* Khóa tương tác khi đã lật */
+    pointer-events: none; 
   }
 
-  /* Thiết lập z-index để trang đầu nằm trên cùng */
-  #page1 { z-index: 3; }
-  #page2 { z-index: 2; }
-  #page3 { z-index: 1; }
+  /* Z-index sẽ được tự động gán bằng JS 
+     để hỗ trợ số lượng trang vô hạn */
 
   /* =========================================
-     HÌNH NỀN & LỚP PHỦ
+     4. HÌNH NỀN & LỚP PHỦ
   ========================================= */
   .bg {
     position: absolute;
@@ -81,14 +77,13 @@
     background-size: cover;
     background-position: center;
     filter: brightness(0.8) contrast(1.2);
-    transition: transform 5s ease; /* Hiệu ứng zoom nhẹ */
+    transition: transform 5s ease; 
   }
 
   .page:hover .bg {
     transform: scale(1.05);
   }
 
-  /* Lớp hạt (Particles) bằng Canvas */
   .particle-canvas {
     position: absolute;
     top: 0;
@@ -112,7 +107,7 @@
   }
 
   /* =========================================
-     NỘI DUNG (CONTENT)
+     5. NỘI DUNG (CONTENT)
   ========================================= */
   .content {
     position: relative;
@@ -133,7 +128,7 @@
   }
 
   /* =========================================
-     NÚT BẤM (BUTTONS) - GLASSMORPHISM
+     6. NÚT BẤM VÀ UI CONTROLS
   ========================================= */
   .next-btn {
     position: absolute;
@@ -161,27 +156,30 @@
     transform: scale(1.1);
   }
 
+  /* Nút thoát đã được nâng cấp thành nút chứa chữ */
   .close-btn {
     position: absolute;
     top: 20px;
     right: 20px;
-    font-size: 24px;
+    font-size: 16px;
+    font-weight: bold;
     cursor: pointer;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    background: rgba(255, 50, 50, 0.2);
+    border: 1px solid rgba(255, 100, 100, 0.4);
     backdrop-filter: blur(5px);
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
+    padding: 8px 18px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: 0.3s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
   }
 
   .close-btn:hover {
-    background: rgba(255,0,0,0.6);
-    transform: rotate(90deg);
+    background: rgba(255, 50, 50, 0.6);
+    transform: scale(1.05);
   }
 
   .overlay-text {
@@ -201,39 +199,8 @@
     animation: fadeInUp 1s ease-out 0.3s backwards;
   }
 
-  .last-controls {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 15px;
-    width: 100%;
-    justify-content: center;
-  }
-
-  button {
-    padding: 15px 25px;
-    font-size: 16px;
-    font-weight: bold;
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    color: white;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.3s;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  }
-
-  button:hover {
-    background: rgba(255,255,255,0.3);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(255,255,255,0.2);
-  }
-
   /* =========================================
-     THÔNG BÁO (TOAST NOTIFICATION)
+     7. THÔNG BÁO (TOAST NOTIFICATION)
   ========================================= */
   #toast-container {
     position: fixed;
@@ -260,7 +227,7 @@
   }
 
   /* =========================================
-     ANIMATIONS (HIỆU ỨNG CHUYỂN ĐỘNG)
+     8. ANIMATIONS (HIỆU ỨNG CHUYỂN ĐỘNG)
   ========================================= */
   @keyframes fadeInDown {
     from { opacity: 0; transform: translateY(-30px); }
@@ -290,7 +257,7 @@
 
 <div class="book" id="book-container">
 
-  <div class="page" id="page1">
+  <div class="page">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
     <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
@@ -299,57 +266,55 @@
       <h1>Thế giới mới</h1>
       <p style="margin-top:10px; opacity:0.8;">Vuốt sang trái hoặc nhấn nút để tiếp tục</p>
       
-      <div class="next-btn" onclick="nextPage(0)">➜</div>
+      <div class="next-btn" onclick="nextPage()">➜</div>
     </div>
   </div>
 
-  <div class="page" id="page2">
+  <div class="page">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
     <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
 
     <div class="content">
-      <div class="close-btn" onclick="goHome()">✖</div>
-
       <div class="overlay-text">
         Nội dung chữ ở đây.<br>
         <span style="font-size: 16px; opacity: 0.7; margin-top: 10px; display: block;">
-          Đã được nâng cấp chuẩn siêu vip pro với hiệu ứng Particle và Vuốt (Swipe).
+          Nút "Thoát" sẽ được tự động thêm vào góc phải trang này bằng mã JS.
         </span>
       </div>
 
-      <div class="next-btn" onclick="nextPage(1)">➜</div>
+      <div class="next-btn" onclick="nextPage()">➜</div>
     </div>
   </div>
 
-  <div class="page" id="page3">
+  <div class="page">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
     <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
 
-    <div class="content">
-      <h1 style="text-align:center; margin-top: 30%;">Hoàn Thành</h1>
-      
-      <div class="last-controls">
-        <button onclick="goHome()">🏠 Trang chủ</button>
-        <button onclick="restart()">↺ Đọc lại</button>
-      </div>
+    <div class="content" style="justify-content: center; align-items: center;">
+      <h1 style="text-align:center; margin: 0;">Hoàn Thành</h1>
     </div>
   </div>
 
 </div>
-
 <script>
   // ==========================================
-  // PHẦN 1: LOGIC LẬT TRANG CƠ BẢN
+  // PHẦN 1: QUẢN LÝ LẬT TRANG & Z-INDEX ĐỘNG
   // ==========================================
-  let pages = document.querySelectorAll(".page");
+  const pages = document.querySelectorAll(".page");
   let currentPageIndex = 0;
 
-  function nextPage(i) {
-    if (i >= 0 && i < pages.length - 1) {
-      pages[i].classList.add("flipped");
-      currentPageIndex = i + 1;
+  // Tự động sắp xếp z-index để trang 1 luôn ở trên cùng
+  // Điều này giúp bạn thêm bao nhiêu trang tùy thích mà không sợ đè lớp
+  pages.forEach((page, index) => {
+    page.style.zIndex = pages.length - index;
+  });
+
+  function nextPage() {
+    if (currentPageIndex >= 0 && currentPageIndex < pages.length - 1) {
+      pages[currentPageIndex].classList.add("flipped");
+      currentPageIndex++;
     }
   }
 
@@ -361,20 +326,34 @@
   }
 
   function goHome() {
-    // Chuyển hướng hoặc báo lỗi nếu không có file index
+    // Chuyển hướng về trang chủ
     console.log("Redirecting to index.html...");
     // window.location.href = "index.html"; 
     alert("Đang về trang chủ!");
   }
 
-  function restart() {
-    pages.forEach(p => p.classList.remove("flipped"));
-    currentPageIndex = 0;
-    showToast("Đã khởi động lại cuốn sách!");
-  }
+  // ==========================================
+  // PHẦN 2: TỰ ĐỘNG THÊM NÚT "THOÁT"
+  // ==========================================
+  // Vòng lặp duyệt qua tất cả các trang
+  pages.forEach((page, index) => {
+    // Nếu KHÔNG PHẢI là trang cuối cùng
+    if (index !== pages.length - 1) {
+      const contentDiv = page.querySelector('.content');
+      
+      // Tạo một phần tử div làm nút thoát
+      const exitBtn = document.createElement('div');
+      exitBtn.className = 'close-btn';
+      exitBtn.innerText = 'Thoát';
+      exitBtn.onclick = goHome;
+      
+      // Gắn nút thoát vào trong thẻ content
+      contentDiv.appendChild(exitBtn);
+    }
+  });
 
   // ==========================================
-  // PHẦN 2: THÔNG BÁO (TOAST) AUTHOR
+  // PHẦN 3: THÔNG BÁO (TOAST) AUTHOR
   // ==========================================
   function showToast(message) {
     const toast = document.getElementById("toast-container");
@@ -383,24 +362,22 @@
     msgElement.innerText = message;
     toast.classList.add("show");
     
-    // Tự động ẩn sau 3.5 giây
     setTimeout(() => {
       toast.classList.remove("show");
     }, 3500);
   }
 
-  // Khởi chạy khi tải trang
   window.onload = () => {
     showToast("UI Developed by Kris Artura 🚀");
     initParticles();
   };
 
   // ==========================================
-  // PHẦN 3: VUỐT CẢM ỨNG (SWIPE GESTURE)
+  // PHẦN 4: VUỐT CẢM ỨNG (SWIPE GESTURE)
   // ==========================================
   let touchStartX = 0;
   let touchEndX = 0;
-  const swipeThreshold = 50; // Khoảng cách tối thiểu để nhận diện vuốt
+  const swipeThreshold = 50; 
 
   const bookContainer = document.getElementById('book-container');
 
@@ -416,18 +393,16 @@
   function handleSwipe() {
     let diffX = touchStartX - touchEndX;
     
-    // Vuốt sang trái (Next Page)
     if (diffX > swipeThreshold) {
-      nextPage(currentPageIndex);
+      nextPage();
     }
-    // Vuốt sang phải (Prev Page)
     else if (diffX < -swipeThreshold) {
       prevPage();
     }
   }
 
   // ==========================================
-  // PHẦN 4: HIỆU ỨNG HẠT (PARTICLES VORTEX)
+  // PHẦN 5: HIỆU ỨNG HẠT (PARTICLES VORTEX)
   // ==========================================
   function initParticles() {
     const canvases = document.querySelectorAll('.particle-canvas');
@@ -436,7 +411,7 @@
       const ctx = canvas.getContext('2d');
       let width, height;
       let particlesArray = [];
-      const numberOfParticles = 40; // Số lượng hạt
+      const numberOfParticles = 40; 
 
       function resize() {
         width = canvas.width = window.innerWidth;
@@ -459,7 +434,6 @@
           this.x += this.speedX;
           this.y += this.speedY;
 
-          // Dội lại khi đụng viền
           if (this.x > width || this.x < 0) this.speedX *= -1;
           if (this.y > height || this.y < 0) this.speedY *= -1;
         }
