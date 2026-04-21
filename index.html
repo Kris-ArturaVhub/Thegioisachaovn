@@ -1,2 +1,81 @@
-# Thegioisachaovn
-<h3>The world has a lot of story,book,comic,... Made by AI and Human</h3>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Website</title>
+
+  <style>
+    /* Nền toàn trang */
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: url("https://picsum.photos/1920/1080") no-repeat center/cover;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Khung trắng chính */
+    .container {
+      background: white;
+      width: 90%;
+      max-width: 500px;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    /* Tiêu đề */
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: gray;
+      margin-bottom: 20px;
+    }
+
+    /* Ma trận */
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Ô */
+    .card {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+      text-decoration: none;
+      color: black;
+      font-weight: bold;
+    }
+
+    .card:hover {
+      background: #ddd;
+      transform: scale(1.03);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>Welcome</h1>
+    <p>Chọn mục bên dưới</p>
+
+    <div class="grid">
+      <a href="page1.html" class="card">Tên 1</a>
+      <a href="page2.html" class="card">Tên 2</a>
+    /*  <a href="page3.html" class="card">Tên 3</a>*/
+      /*<a href="page4.html" class="card">Tên 4</a>*/
+    </div>
+  </div>
+
+</body>
+</html>
