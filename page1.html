@@ -18,7 +18,6 @@ body {
   overflow: hidden;
 }
 
-/* ===== CONTAINER ===== */
 .book {
   width: 100vw;
   height: 100vh;
@@ -31,29 +30,48 @@ body {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
   transform-origin: left;
   transition: transform 1s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 40px;
 }
 
-/* flip effect */
 .page.flipped {
   transform: rotateY(-180deg);
 }
 
-/* ===== PAGE 1 ===== */
-.page1 h1 {
-  font-size: 48px;
-  font-weight: bold;
-  color: white;
+/* ===== LAYER ===== */
+.bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
 }
 
-/* arrow button */
+.overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 2;
+}
+
+.content {
+  position: relative;
+  z-index: 3;
+  color: white;
+  padding: 40px;
+}
+
+/* ===== TITLE ===== */
+h1 {
+  font-size: 48px;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(0,0,0,0.8);
+}
+
+/* ===== BUTTON ===== */
 .next-btn {
   position: absolute;
   bottom: 20px;
@@ -63,30 +81,29 @@ body {
   cursor: pointer;
   opacity: 0;
   transition: 1s;
+  z-index: 4;
 }
 
 .next-btn.show {
   opacity: 1;
 }
 
-/* ===== PAGE 2 TEXT OVER IMAGE ===== */
-.overlay-text {
-  position: absolute;
-  color: white;
-  font-size: 24px;
-}
-
-/* ===== CLOSE BUTTON ===== */
+/* ===== CLOSE ===== */
 .close-btn {
   position: absolute;
   top: 10px;
   right: 15px;
   font-size: 28px;
-  color: white;
   cursor: pointer;
 }
 
-/* ===== LAST PAGE BUTTONS ===== */
+/* ===== TEXT OVER ===== */
+.overlay-text {
+  position: absolute;
+  font-size: 24px;
+}
+
+/* ===== LAST ===== */
 .last-controls {
   position: absolute;
   bottom: 20px;
@@ -114,33 +131,44 @@ button:hover {
 <div class="book">
 
   <!-- ===== PAGE 1 ===== -->
-  <div class="page page1" id="page1" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')">
-    <h1>Thế giới mới</h1>
+  <div class="page" id="page1">
+    <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
+    <div class="overlay"></div>
+
+    <div class="content">
+      <h1>Thế giới mới</h1>
+    </div>
 
     <div class="next-btn" id="next1">➜</div>
   </div>
 
   <!-- ===== PAGE 2 ===== -->
-  <div class="page page2" id="page2" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')">
-    
-    <div class="close-btn" onclick="goHome()">✖</div>
+  <div class="page" id="page2">
+    <div class="bg" style="background-image:url('img2.jpg')"></div>
+    <div class="overlay"></div>
 
-    <!-- text đè lên ảnh -->
-    <div class="overlay-text" style="top:50%; left:30%;">
-      Nội dung chữ ở đây (anh tự chỉnh vị trí)
+    <div class="content">
+      <div class="close-btn" onclick="goHome()">✖</div>
+
+      <div class="overlay-text" style="top:50%; left:30%;">
+        Nội dung chữ ở đây
+      </div>
     </div>
 
     <div class="next-btn" id="next2">➜</div>
   </div>
 
-  <!-- ===== LAST PAGE ===== -->
-  <div class="page page3" id="page3" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')">
+  <!-- ===== PAGE 3 ===== -->
+  <div class="page" id="page3">
+    <div class="bg" style="background-image:url('img3.jpg')"></div>
+    <div class="overlay"></div>
 
-    <div class="last-controls">
-      <button onclick="goHome()">Trang chủ</button>
-      <button onclick="restart()">Đọc lại</button>
+    <div class="content">
+      <div class="last-controls">
+        <button onclick="goHome()">Trang chủ</button>
+        <button onclick="restart()">Đọc lại</button>
+      </div>
     </div>
-
   </div>
 
 </div>
@@ -148,12 +176,12 @@ button:hover {
 <script>
 let pages = document.querySelectorAll(".page");
 
-/* ===== SHOW ARROW AFTER 10s ===== */
+/* hiện nút sau 10s */
 setTimeout(() => {
   document.getElementById("next1").classList.add("show");
 }, 10000);
 
-/* ===== PAGE NAVIGATION ===== */
+/* chuyển trang */
 document.getElementById("next1").onclick = () => {
   pages[0].classList.add("flipped");
   document.getElementById("next1").style.display = "none";
@@ -167,12 +195,12 @@ document.getElementById("next2").onclick = () => {
   pages[1].classList.add("flipped");
 };
 
-/* ===== HOME ===== */
+/* về trang chủ */
 function goHome() {
   window.location.href = "index.html";
 }
 
-/* ===== RESTART ===== */
+/* đọc lại */
 function restart() {
   pages.forEach(p => p.classList.remove("flipped"));
 
@@ -187,4 +215,4 @@ function restart() {
 </script>
 
 </body>
-    </html>
+</html>
