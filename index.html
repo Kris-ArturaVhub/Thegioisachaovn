@@ -31,7 +31,7 @@ body::before {
   position: relative;
   z-index: 1;
   width: 90%;
-  max-width: 500px;
+  max-width: 1000px;
   padding: 25px;
 
   background: rgba(255,255,255,0.1);
@@ -86,7 +86,7 @@ body::before {
 /* HOT */
 .badge.hot {
   background: orange;
-  animation: pulse 1s infinite;
+  animation: pulse 1.5s infinite;
 }
 
 /* VIP (cầu vồng) */
@@ -96,7 +96,7 @@ body::before {
     red, orange, yellow, green, cyan, blue, violet
   );
   background-size: 300%;
-  animation: rainbow 3s linear infinite;
+  animation: rainbow 4s linear infinite;
   color: black;
 }
 
@@ -108,13 +108,14 @@ body::before {
 
 @keyframes rainbow {
   0% { background-position: 0% }
-  100% { background-position: 100% }
+  50% { background-position: 100% }
+  100% { background-position: 1% }
 }
 
 /* ===== EXPAND ===== */
 .card.active {
   transform: scale(1.05);
-  background: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.9);
 }
 
 /* ===== DESC ===== */
@@ -127,17 +128,17 @@ body::before {
 
 .card.active .desc {
   max-height: 100px;
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 /* ===== BUTTON ===== */
 .read-btn {
   display: inline-block;
-  margin-top: 10px;
+  margin-top: 13px;
   padding: 8px 20px;
   background: cyan;
   color: black;
-  border-radius: 8px;
+  border-radius: 6px;
   text-decoration: none;
   font-weight: bold;
 }
