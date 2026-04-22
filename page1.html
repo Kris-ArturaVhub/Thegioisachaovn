@@ -170,46 +170,49 @@
      5. NÚT ĐIỀU HƯỚNG (ĐỒNG BỘ 100%)
   ========================================= */
   
-  .nav-trigger {
-    position: absolute;
-    bottom: 85px; /* Giữ vị trí cao thêm 10px như bạn muốn */
-    
-    width: 60px;
-    height: 60px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    z-index: 20;
-    transition: all 0.3s ease;
-    
-    /* MỜ KHOẢNG 70% (Chỉ hiện 30%) - Áp dụng cho cả 2 nút */
-    opacity: 0.3; 
-  }
+/* 1. Thiết lập chung cho cả 2 nút: Mờ 70%, nâng cao lên 95px */
+.nav-trigger {
+  position: absolute;
+  bottom: 95px; /* Đã nâng lên thêm để tránh cấn menu hệ thống */
+  width: 60px;
+  height: 60px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  z-index: 20;
+  transition: all 0.3s ease;
+  
+  /* QUAN TRỌNG: Mặc định mờ 70% cho CẢ HAI nút */
+  opacity: 0.3; 
+}
 
-  /* Vị trí nút bên phải */
-  .next-trigger {
-    right: 25px;
-  }
+/* 2. Vị trí nút bên phải */
+.next-trigger {
+  right: 25px;
+  /* Đã xóa dòng animation: pulse... ở đây để nút không rung nữa */
+}
 
-  /* Vị trí nút bên trái */
-  .prev-trigger {
-    left: 25px;
-  }
+/* 3. Vị trí nút bên trái */
+.prev-trigger {
+  left: 25px;
+}
 
-  /* Hiệu ứng khi chạm/di chuột vào: Cả 2 đều sáng lên như nhau */
-  .nav-trigger:hover, 
-  .nav-trigger:active {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.15);
-    transform: scale(1.1);
-  }
+/* 4. Hiệu ứng khi chạm: Sáng lên 100% */
+.nav-trigger:hover, 
+.nav-trigger:active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+  
+
 
   /* =========================================
      6. NÚT "TRỞ VỀ" ĐẶC BIỆT (TRANG CUỐI)
