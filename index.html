@@ -1,237 +1,363 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>VIP UI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP UI - Premium Edition</title>
 
 <style>
-/* ===== BODY ===== */
-body {
-  margin: 0;
-  font-family: Arial;
-  background: url("1cd3124a89f9b5fdc7a8aee2bbea4926.png") no-repeat center/cover;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-/* overlay nền */
-body::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  backdrop-filter: blur(6px);
-}
-
-/* ===== CONTAINER ===== */
-.container {
-  position: relative;
-  z-index: 1;
-  width: 90%;
-  max-width: 700px;
-  padding: 25px;
-
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(15px);
-
-  border-radius: 20px;
-  color: white;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-  text-align: center;
-}
-
-/* ===== GRID ===== */
-.grid {
-  display: grid;
-  gap: 12px;
-}
-
-/* ===== CARD ===== */
-.card {
-  background: rgba(255,255,255,0.15);
-  padding: 15px;
-  border-radius: 15px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: 0.3s;
-}
-
-/* ===== BADGE GROUP (quan trọng) ===== */
-.badges {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  display: flex;
-  gap: 5px; /* khoảng cách giữa badge */
-}
-
-/* ===== BADGE CHUNG ===== */
-.badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-weight: bold;
-  color: white;
-}
-
-/* NEW */
-.badge.new {
-  background: red;
-}
-
-/* HOT */
-.badge.hot {
-  background: orange;
-  animation: pulse 1.5s infinite;
-}
-
-/* VIP (cầu vồng) */
-.badge.vip {
-  background: linear-gradient(
-    45deg,
-    red, orange, yellow, green, cyan, blue, violet
-  );
-  background-size: 300%;
-  animation: rainbow 4s linear infinite;
-  color: black;
-}
-
-/* ===== ANIMATION ===== */
-@keyframes pulse {
-  0%,100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-}
-
-@keyframes rainbow {
-  0% { background-position: 0% }
-  50% { background-position: 100% }
-  100% { background-position: 1% }
-}
-
-/* ===== EXPAND ===== */
-.card.active {
-  transform: scale(1.05);
-  background: rgba(255,255,255,0.9);
-}
-
-/* ===== DESC ===== */
-.desc {
-  max-height: 0;
-  overflow: hidden;
-  transition: 0.3s;
-  font-size: 14px;
-}
-
-.card.active .desc {
-  max-height: 100px;
-  margin-top: 15px;
-}
-
-/* ===== BUTTON ===== */
-.read-btn {
-  display: inline-block;
-  margin-top: 13px;
-  padding: 15px 30px;
-  background: cyan;
-  color: black;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-/* ===== SHINE ===== */
-.shine::before {
-  content: "";
-  position: absolute;
-  top: -100%;
-  left: -100%;
-  width: 200%;
-  height: 200%;
-
-  background: linear-gradient(
-    120deg,
-    transparent 40%,
-    rgba(255,255,255,0.4) 50%,
-    transparent 60%
-  );
-
-  transform: rotate(25deg);
-  animation: shine 3s linear infinite;
-}
-
-@keyframes shine {
-  from {
-    transform: translate(-100%, -100%) rotate(25deg);
+  /* =========================================
+     1. RESET VÀ CÀI ĐẶT CƠ BẢN
+  ========================================= */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
   }
-  to {
-    transform: translate(100%, 100%) rotate(25deg);
+
+  /* ===== BODY ===== */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: url("1cd3124a89f9b5fdc7a8aee2bbea4926.png") no-repeat center/cover;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    color: white;
   }
-}
-colo1 {
-  color: black;
-}
+
+  /* Overlay nền tối mờ */
+  body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* =========================================
+     2. CONTAINER CHÍNH (ĐÃ KÉO DÀI)
+  ========================================= */
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 95%;
+    max-width: 750px;
+    
+    /* Kéo dài chiều cao container */
+    min-height: 80vh; 
+    display: flex;
+    flex-direction: column;
+    
+    padding: 35px 25px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 25px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+    text-align: center;
+  }
+
+  .container h2 {
+    font-size: 32px; /* Chữ to hơn */
+    margin-bottom: 10px;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  }
+
+  .container p {
+    font-size: 18px; /* Chữ to hơn */
+    margin-bottom: 25px;
+    opacity: 0.8;
+  }
+
+  /* =========================================
+     3. GRID & CARD LAYOUT
+  ========================================= */
+  .grid {
+    display: grid;
+    gap: 18px;
+    flex-grow: 1; /* Giúp grid chiếm hết không gian trống */
+  }
+
+  /* ===== CARD ===== */
+  .card {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 22px 20px;
+    border-radius: 18px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-size: 20px; /* Font chữ Card to dễ nhìn */
+    font-weight: 600;
+  }
+
+  .card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+
+  /* Active State (Khi mở rộng) */
+  .card.active {
+    transform: scale(1.03);
+    background: rgba(255, 255, 255, 0.95);
+    color: #111; /* Đổi màu chữ khi nền trắng */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  /* =========================================
+     4. HIỆU ỨNG TEXT & NÚT VIP (BẢY MÀU)
+  ========================================= */
+  
+  /* Text Bảy Màu */
+  .vip-text {
+    background: linear-gradient(
+      90deg,
+      #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000
+    );
+    background-size: 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-flow 4s linear infinite;
+    font-weight: 900;
+    font-size: 22px;
+  }
+
+  /* Nút VIP Bảy Màu */
+  .read-btn.vip-btn {
+    background: linear-gradient(
+      90deg,
+      #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000
+    );
+    background-size: 300%;
+    animation: rainbow-flow 4s linear infinite;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    border: none;
+    box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
+  }
+
+  .read-btn.vip-btn:hover {
+    box-shadow: 0 8px 25px rgba(255, 0, 255, 0.6);
+    transform: translateY(-2px);
+  }
+
+  /* Animation cho luồng màu chuyển động */
+  @keyframes rainbow-flow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+
+  /* =========================================
+     5. BADGES (NHÃN DÁN)
+  ========================================= */
+  .badges {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    display: flex;
+    gap: 6px; 
+  }
+
+  .badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  }
+
+  .badge.new {
+    background: #ff3333;
+  }
+
+  .badge.hot {
+    background: #ff8800;
+    animation: pulse 1.5s infinite;
+  }
+
+  .badge.vip {
+    background: linear-gradient(
+      45deg,
+      red, orange, yellow, green, cyan, blue, violet
+    );
+    background-size: 300%;
+    animation: rainbow 4s linear infinite;
+    color: black;
+    text-shadow: 0 0 2px rgba(255,255,255,0.8);
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  @keyframes rainbow {
+    0% { background-position: 0% }
+    50% { background-position: 100% }
+    100% { background-position: 1% }
+  }
+
+  /* =========================================
+     6. PHẦN MÔ TẢ (DESCRIPTION)
+  ========================================= */
+  .desc {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, margin-top 0.4s ease;
+    font-size: 16px; /* Chữ mô tả to hơn */
+    font-weight: normal;
+    color: inherit;
+    line-height: 1.5;
+  }
+
+  .card.active .desc {
+    max-height: 150px; /* Tăng max-height để chứa nút to hơn */
+    margin-top: 15px;
+  }
+
+  /* =========================================
+     7. NÚT ĐỌC (READ BUTTON)
+  ========================================= */
+  .read-btn {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 16px 40px; /* Nút to ra rất nhiều */
+    background: #00e5ff;
+    color: #000;
+    border-radius: 10px; /* Bo góc mượt hơn */
+    text-decoration: none;
+    font-weight: 900;
+    font-size: 20px; /* Chữ trong nút to hơn */
+    transition: 0.3s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .read-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* =========================================
+     8. HIỆU ỨNG SHINE (SÁNG BÓNG)
+  ========================================= */
+  .shine::before {
+    content: "";
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+
+    background: linear-gradient(
+      120deg,
+      transparent 40%,
+      rgba(255,255,255,0.4) 50%,
+      transparent 60%
+    );
+
+    transform: rotate(25deg);
+    animation: shine 3s linear infinite;
+    pointer-events: none; /* Tránh click nhầm vào lớp shine */
+  }
+
+  @keyframes shine {
+    from { transform: translate(-100%, -100%) rotate(25deg); }
+    to { transform: translate(100%, 100%) rotate(25deg); }
+  }
+
+  .colo1 {
+    color: white;
+  }
+
+  /* =========================================
+     9. TOAST THÔNG BÁO TÁC GIẢ
+  ========================================= */
+  #toast-author {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 10, 10, 0.85);
+    border: 1px solid #00e5ff;
+    color: #00e5ff;
+    padding: 12px 25px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 15px;
+    z-index: 9999;
+    box-shadow: 0 5px 20px rgba(0, 229, 255, 0.3);
+    transition: top 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    letter-spacing: 1px;
+  }
+
+  #toast-author.show {
+    top: 30px;
+  }
+
 </style>
 </head>
 
 <body>
 
+<div id="toast-author">Author: Kris Artura ✨</div>
+
 <div class="container">
   <h2>📚 Thế giới sách ảo</h2>
-  <p>Chọn sách:</p>
+  <p>Chọn sách để bắt đầu:</p>
 
   <div class="grid">
 
-    <!-- CARD 1 -->
     <div class="card shine colo1" onclick="toggle(this)">
       <div class="badges">
         <span class="badge new">NEW</span>
         <span class="badge hot">HOT</span>
         <span class="badge vip">VIP</span>
       </div>
-      Thế giới mới - Truyện ngắn 
+      <span class="vip-text">Thế giới mới - Truyện ngắn</span>
+      
       <div class="desc">
         văn bản 1 với đề tài là hình ảnh thiên nhiên và con người 
         <br>
-        <a href="page1.html" class="read-btn">Đọc</a>
+        <a href="page1.html" class="read-btn vip-btn">Đọc Ngay</a>
       </div>
     </div>
 
-    <!-- CARD 2 -->
     <div class="card" onclick="toggle(this)">
       <div class="badges">
         <span class="badge hot">HOT</span>
       </div>
-      sắp có...
+      Sách Bí Ẩn 1...
       <div class="desc">
-        Mô tả...
+        Đang cập nhật nội dung...
         <br>
         <a href="page2.html" class="read-btn">Đọc</a>
       </div>
     </div>
 
-    <!-- CARD 3 -->
     <div class="card" onclick="toggle(this)">
       <div class="badges">
         <span class="badge vip">VIP</span>
       </div>
-      sắp có...
+      <span class="vip-text">Hành Trình Bất Tận</span>
       <div class="desc">
-        Mô tả...
+        Chương trình độc quyền dành cho hội viên.
         <br>
-        <a href="page3.html" class="read-btn">Đọc</a>
+        <a href="page3.html" class="read-btn vip-btn">Đọc Ngay</a>
       </div>
     </div>
 
-    <!-- CARD 4 -->
     <div class="card" onclick="toggle(this)">
-        sắp có...
+        Sách Phổ Thông...
       <div class="desc">
-        Mô tả...
+        Truyện ngắn hằng ngày.
         <br>
         <a href="page4.html" class="read-btn">Đọc</a>
       </div>
@@ -241,13 +367,37 @@ colo1 {
 </div>
 
 <script>
-function toggle(card) {
-  document.querySelectorAll(".card").forEach(c => {
-    if (c !== card) c.classList.remove("active");
-  });
-  card.classList.toggle("active");
-}
+  // ==========================================
+  // LOGIC MỞ RỘNG CARD (GIỮ NGUYÊN CORE)
+  // ==========================================
+  function toggle(card) {
+    // Thu gọn tất cả các thẻ khác
+    document.querySelectorAll(".card").forEach(c => {
+      if (c !== card) c.classList.remove("active");
+    });
+    
+    // Đảo trạng thái của thẻ đang click
+    card.classList.toggle("active");
+  }
+
+  // ==========================================
+  // LOGIC HIỂN THỊ THÔNG BÁO TÁC GIẢ
+  // ==========================================
+  window.onload = () => {
+    const toast = document.getElementById("toast-author");
+    
+    // Hiện toast sau 0.5s
+    setTimeout(() => {
+      toast.classList.add("show");
+    }, 500);
+
+    // Ẩn toast sau 4.5s
+    setTimeout(() => {
+      toast.classList.remove("show");
+    }, 4500);
+  };
 </script>
 
 </body>
-</html>
+        </html>
+        
