@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIP UI - Kris Artura Edition</title>
+<title>The gioi sach ao VN-home</title>
 
 <style>
   /* =========================================
@@ -17,7 +17,8 @@
   }
 
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Arial, sans-serif;
+    /* Ảnh nền body theo đúng bản gốc */
     background: url("1cd3124a89f9b5fdc7a8aee2bbea4926.png") no-repeat center/cover;
     min-height: 100vh;
     display: flex;
@@ -27,270 +28,316 @@
     padding: 20px 0;
   }
 
+  /* Overlay nền mờ */
   body::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
 
   /* =========================================
-     II. CONTAINER CHÍNH (TỐI ƯU CHIỀU CAO)
+     II. CONTAINER CHÍNH
   ========================================= */
   .container {
     position: relative;
     z-index: 1;
-    width: 92%;
-    max-width: 720px;
-    min-height: 85vh; /* Dài hơn theo yêu cầu */
+    width: 90%;
+    max-width: 700px;
+    min-height: 85vh; /* Giữ khung dài, vip hơn */
     
-    padding: 40px 20px;
-    background: rgba(255, 255, 255, 0.07);
-    backdrop-filter: blur(25px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 30px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    padding: 35px 25px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     text-align: center;
+    color: white;
+    
     display: flex;
     flex-direction: column;
   }
 
   h2 {
-    font-size: 36px;
-    margin-bottom: 8px;
-    color: #fff;
-    text-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    font-size: 32px;
+    margin-bottom: 10px;
   }
 
-  .sub-title {
+  .container p {
     font-size: 18px;
-    margin-bottom: 40px;
-    color: rgba(255,255,255,0.7);
+    margin-bottom: 30px;
   }
 
   /* =========================================
-     III. CẤU TRÚC CARD & BACKGROUND IMAGE
+     III. CẤU TRÚC GRID & CARD (TỐI ƯU LAG)
   ========================================= */
   .grid {
     display: grid;
-    gap: 35px; /* Tăng khoảng cách để badges không chạm nhau */
+    gap: 25px; /* Giãn cách để badge không đụng nhau */
     flex-grow: 1;
   }
 
   .card {
     position: relative;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.15);
     background-size: cover;
     background-position: center;
     
-    padding: 25px;
-    border-radius: 20px;
+    padding: 20px;
+    border-radius: 15px;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     
-    /* QUAN TRỌNG: Để hiện badge lòi ra ngoài, không dùng overflow:hidden ở đây */
-    overflow: visible; 
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* TỐI ƯU LAG: 
+      Chỉ transition các thuộc tính cần thiết thay vì 'all'.
+      Sử dụng cubic-bezier để hiệu ứng đàn hồi siêu mượt.
+      Sử dụng will-change để phần cứng chuẩn bị trước.
+    */
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                background-color 0.4s ease;
+    will-change: transform, background-color;
+    transform: translateZ(0); /* Bật tăng tốc phần cứng (Hardware Acceleration) */
+    
+    overflow: visible; /* Để hiện badge lộ ra ngoài */
+    text-align: left; /* Căn trái chữ bên trong card cho giống gốc */
   }
 
-  /* Lớp phủ mờ cho card có ảnh nền để chữ không bị chìm */
+  /* Lớp phủ mờ cho card có ảnh nền */
   .card::after {
     content: "";
     position: absolute;
     inset: 0;
     background: rgba(0,0,0,0.3);
-    border-radius: 20px;
+    border-radius: 15px;
     z-index: 1;
-    transition: 0.3s;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
   }
 
-  /* Khi CARD ACTIVE: Mất ảnh nền, chuyển sang màu trắng */
+  /* Mở rộng Card (Active State) */
   .card.active {
-    background-image: none !important; /* Xóa ảnh nền */
-    background-color: rgba(255, 255, 255, 0.98) !important;
-    transform: scale(1.05);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    background-image: none !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    transform: scale(1.05) translateZ(0); /* Mượt và êm hơn */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    z-index: 10;
   }
 
   .card.active::after {
-    display: none; /* Bỏ lớp phủ mờ khi đã hiện nền trắng */
+    opacity: 0; /* Ẩn lớp phủ đen khi kích hoạt */
   }
 
-  /* Nội dung bên trong phải nằm trên lớp phủ mờ */
+  /* Nội dung Card nằm trên lớp phủ */
   .card-content {
     position: relative;
     z-index: 5;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: bold;
     color: white;
+    transition: color 0.4s ease;
   }
 
+  /* Khi active thì chữ chuyển thành màu đen */
   .card.active .card-content {
-    color: #111; /* Chữ đen khi nền trắng */
+    color: black;
+  }
+
+  /* Fix cho các card không dùng thẻ span (chữ trắng gốc) */
+  .colo1 .card-content {
+    color: white;
+  }
+  .card.active.colo1 .card-content {
+    color: black;
   }
 
   /* =========================================
-     IV. BADGES (LỘ 50% THEO PHƯƠNG DỌC)
+     IV. BADGES (LỘ 50% & MƯỢT MÀ HƠN)
   ========================================= */
   .badges {
     position: absolute;
-    top: 0; /* Đưa sát mép trên */
-    right: 20px;
-    transform: translateY(-50%); /* Lộ 50% ra ngoài */
+    top: 0; 
+    right: 15px;
+    transform: translateY(-50%); /* Lộ 50% theo phương dọc */
     display: flex;
-    gap: 8px;
-    z-index: 100; /* Nằm trên cùng */
+    gap: 6px;
+    z-index: 100;
   }
 
   .badge {
     font-size: 11px;
-    padding: 5px 10px;
-    border-radius: 8px;
-    font-weight: 900;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
     color: white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    text-transform: uppercase;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
   }
 
-  .badge.new { background: #ff2d55; }
+  .badge.new { 
+    background: red; 
+  }
+  
   .badge.hot { 
-    background: #ff9500; 
-    animation: pulse-glow 1.5s infinite;
+    background: orange; 
+    animation: pulse 1.5s infinite;
   }
+
+  /* Badge VIP: Tăng thời gian (8s) và làm mượt cầu vồng */
   .badge.vip {
-    background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00eeff, #0000ff, #8b00ff);
+    background: linear-gradient(
+      90deg,
+      red, orange, yellow, #00ff00, cyan, blue, violet, red
+    );
+    background-size: 400%; /* Giúp màu cuộn mượt hơn rất nhiều */
+    animation: rainbow-smooth 8s linear infinite;
+    color: black;
+  }
+
+  /* Tiêu đề VIP: Cũng chạy mượt 8 giây */
+  .vip-text {
+    background: linear-gradient(
+      90deg,
+      red, orange, yellow, #00ff00, cyan, blue, violet, red
+    );
     background-size: 400%;
-    animation: rainbow-move 5s linear infinite;
-    color: #000;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-smooth 8s linear infinite;
   }
 
-  @keyframes pulse-glow {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.7); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 149, 0, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 149, 0, 0); }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
   }
 
-  @keyframes rainbow-move {
+  @keyframes rainbow-smooth {
     0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
   }
 
   /* =========================================
-     V. NÚT ĐỌC & HIỆU ỨNG RAINBOW VIP
+     V. PHẦN MÔ TẢ (DESCRIPTION)
   ========================================= */
   .desc {
     max-height: 0;
     overflow: hidden;
-    transition: 0.4s ease;
+    /* Tối ưu lag: Chỉ chuyển động max-height và margin */
+    transition: max-height 0.5s cubic-bezier(0.25, 1, 0.5, 1), 
+                margin-top 0.4s ease,
+                opacity 0.3s ease;
+    font-size: 16px;
+    font-weight: normal;
+    opacity: 0;
   }
 
   .card.active .desc {
-    max-height: 200px;
-    margin-top: 20px;
-  }
-
-  .read-btn {
-    display: inline-block;
-    padding: 18px 45px; /* Nút to hơn dễ nhấn */
-    background: #00f2ff;
-    color: #000;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 900;
-    font-size: 20px;
-    transition: 0.3s;
-    text-transform: uppercase;
-  }
-
-  /* Nút Đọc Bảy Màu cho VIP */
-  .vip-btn {
-    background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00eeff, #0000ff, #8b00ff);
-    background-size: 300%;
-    animation: rainbow-move 3s linear infinite;
-    color: white;
-    border: none;
-  }
-
-  .vip-text {
-    background: linear-gradient(90deg, #ff0000, #00eeff, #ff0000);
-    background-size: 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: rainbow-move 3s linear infinite;
+    max-height: 150px;
+    margin-top: 15px;
+    opacity: 1;
   }
 
   /* =========================================
-     VI. LỚP SHINE (SÁNG BÓNG) - CÁCH LÀM MỚI
+     VI. NÚT ĐỌC (KHÔNG CẦU VỒNG, TO DỄ BẤM)
   ========================================= */
-  /* Do card không dùng overflow:hidden, ta tạo 1 div con để chứa hiệu ứng Shine */
+  .read-btn {
+    display: inline-block;
+    margin-top: 13px;
+    padding: 15px 35px; /* To hơn xíu để dễ nhấn */
+    background: cyan;
+    color: black;
+    border-radius: 8px; /* Bo góc đẹp hơn */
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 18px;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+
+  .read-btn:active {
+    transform: scale(0.95);
+    background: #00cccc;
+  }
+
+  /* =========================================
+     VII. HIỆU ỨNG SÁNG BÓNG (SHINE) CHUẨN
+  ========================================= */
   .shine-layer {
     position: absolute;
     inset: 0;
-    border-radius: 20px;
+    border-radius: 15px;
     overflow: hidden;
     z-index: 2;
-    pointer-events: none;
+    pointer-events: none; /* Tránh cản trở click */
   }
 
-  .shine-layer::before {
+  .shine.shine-layer::before {
     content: "";
     position: absolute;
     top: -100%;
     left: -100%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%);
+
+    background: linear-gradient(
+      120deg,
+      transparent 40%,
+      rgba(255,255,255,0.4) 50%,
+      transparent 60%
+    );
+
     transform: rotate(25deg);
-    animation: shine-anim 4s infinite;
+    animation: shine 3s linear infinite;
   }
 
-  @keyframes shine-anim {
-    0% { transform: translate(-100%, -100%) rotate(25deg); }
-    100% { transform: translate(100%, 100%) rotate(25deg); }
+  @keyframes shine {
+    from { transform: translate(-100%, -100%) rotate(25deg); }
+    to { transform: translate(100%, 100%) rotate(25deg); }
   }
 
   /* =========================================
-     VII. TOAST AUTHOR
+     VIII. TOAST THÔNG BÁO
   ========================================= */
-  #toast {
+  #toast-author {
     position: fixed;
-    top: -80px;
+    top: -100px;
     left: 50%;
     transform: translateX(-50%);
-    background: #111;
-    border: 1px solid #00f2ff;
-    color: #00f2ff;
-    padding: 12px 30px;
-    border-radius: 40px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid cyan;
+    color: cyan;
+    padding: 10px 25px;
+    border-radius: 30px;
     font-weight: bold;
-    z-index: 10000;
-    transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 10px 30px rgba(0,242,255,0.2);
+    font-size: 14px;
+    z-index: 9999;
+    transition: top 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
-  #toast.active { top: 25px; }
+  #toast-author.show {
+    top: 25px;
+  }
 
 </style>
 </head>
 
 <body>
 
-<div id="toast">Author: Kris Artura ✨</div>
+<div id="toast-author">Author: Kris Artura ✨</div>
 
 <div class="container">
-  <h2>📚 Thế Giới Sách Ảo</h2>
-  <p class="sub-title">Khám phá kho tàng tri thức VIP</p>
+  <h2>📚 Thế giới sách ảo</h2>
+  <p>kho sách:</p>
 
   <div class="grid">
 
-    <div class="card" 
-         style="background-image: url('https://wallpaperaccess.com/full/124383.jpg');" 
+    <div class="card colo1" 
+         style="background-image: url('1cd3124a89f9b5fdc7a8aee2bbea4926.png');" 
          onclick="toggle(this)">
       
-      <div class="shine-layer"></div> <div class="badges">
+      <div class="shine shine-layer"></div>
+      
+      <div class="badges">
         <span class="badge new">NEW</span>
         <span class="badge hot">HOT</span>
         <span class="badge vip">VIP</span>
@@ -299,26 +346,23 @@
       <div class="card-content">
         <span class="vip-text">Thế giới mới - Truyện ngắn</span>
         <div class="desc">
-          <p style="margin-bottom: 10px;">Khám phá thiên nhiên hùng vĩ qua ngòi bút của Kris Artura.</p>
-          <a href="page1.html" class="read-btn vip-btn">Đọc Ngay</a>
+          văn bản 1 với đề tài là hình ảnh thiên nhiên và con người 
+          <br>
+          <a href="page1.html" class="read-btn">Đọc</a>
         </div>
       </div>
     </div>
 
-    <div class="card" 
-         style="background-image: url('https://wallpaperaccess.com/full/215133.jpg');" 
-         onclick="toggle(this)">
-      
-      <div class="shine-layer"></div>
-      
+    <div class="card" onclick="toggle(this)">
       <div class="badges">
         <span class="badge hot">HOT</span>
       </div>
 
       <div class="card-content">
-        Hành Trình Số
+        thế giới bất tận - Truyện ngắn
         <div class="desc">
-          <p style="margin-bottom: 10px;">Tương lai của công nghệ AI và lập trình.</p>
+          Mô tả...
+          <br>
           <a href="page2.html" class="read-btn">Đọc</a>
         </div>
       </div>
@@ -328,40 +372,60 @@
       <div class="badges">
         <span class="badge vip">VIP</span>
       </div>
+
       <div class="card-content">
-        <span class="vip-text">Kỹ Năng Calisthenics</span>
+        <span class="vip-text">sắp có...</span>
         <div class="desc">
-          <p style="margin-bottom: 10px;">Bí kíp chinh phục Planche từ con số 0.</p>
-          <a href="page3.html" class="read-btn vip-btn">Đọc Ngay</a>
+          Mô tả...
+          <br>
+          <a href="page3.html" class="read-btn">Đọc</a>
         </div>
       </div>
     </div>
 
-  </div>
+    <div class="card" onclick="toggle(this)">
+      <div class="card-content">
+        sắp có...
+        <div class="desc">
+          Mô tả...
+          <br>
+          <a href="page4.html" class="read-btn">Đọc</a>
+        </div>
+      </div>
+    </div>
+
+    </div>
 </div>
 
 <script>
-  // Hàm xử lý việc đóng mở card
+  // Script cực nhẹ, không gây lag
   function toggle(card) {
-    const allCards = document.querySelectorAll(".card");
+    const cards = document.querySelectorAll(".card");
     
-    allCards.forEach(c => {
-      if (c !== card) {
+    // Tối ưu vòng lặp: Chỉ xóa class active ở thẻ đang mở
+    cards.forEach(c => {
+      if (c !== card && c.classList.contains("active")) {
         c.classList.remove("active");
       }
     });
     
+    // Bật/tắt thẻ hiện tại
     card.classList.toggle("active");
   }
 
-  // Hiệu ứng Toast khi vào trang
+  // Toast thông báo siêu mượt
   window.onload = () => {
-    const toast = document.getElementById("toast");
-    setTimeout(() => toast.classList.add("active"), 500);
-    setTimeout(() => toast.classList.remove("active"), 4500);
+    const toast = document.getElementById("toast-author");
+    setTimeout(() => {
+      toast.classList.add("show");
+    }, 400);
+
+    setTimeout(() => {
+      toast.classList.remove("show");
+    }, 4000);
   };
 </script>
 
 </body>
   </html>
-  
+          
