@@ -3,17 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Book UI Premium - Kris Artura</title>
+<title>The gioi moi_TGSA</title>
 
 <style>
   /* =========================================
-     1. BIẾN CSS & CÀI ĐẶT CORE
+     1. BIẾN CSS & CÀI ĐẶT CORE TỐI ƯU
   ========================================= */
   :root {
+    /* Màu sắc chủ đạo */
     --neon-cyan: #00f2ff;
     --neon-purple: #bc13fe;
+    
+    /* Thiết lập kính mờ (Glassmorphism) */
     --glass-bg: rgba(255, 255, 255, 0.07);
     --glass-border: rgba(255, 255, 255, 0.12);
+    
+    /* Tốc độ khung hình */
     --transition-speed: 0.85s;
     --font-main: 'Segoe UI', Roboto, sans-serif;
   }
@@ -23,6 +28,8 @@
     padding: 0;
     box-sizing: border-box;
     font-family: var(--font-main);
+    
+    /* Loại bỏ highlight khi chạm trên mobile */
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -40,7 +47,7 @@
     width: 100vw;
     height: 100vh;
     position: relative;
-    perspective: 1500px;
+    perspective: 1500px; /* Độ sâu 3D */
   }
 
   .page {
@@ -50,6 +57,8 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    
+    /* Hiệu ứng chuyển động mượt mà */
     transition: transform var(--transition-speed) cubic-bezier(0.6, 0, 0.4, 1),
                 opacity var(--transition-speed) ease;
     transform-origin: left center;
@@ -57,7 +66,7 @@
     will-change: transform, opacity;
   }
 
-  /* Hiệu ứng lật trang: Xoay sâu và mờ dần chuyên nghiệp */
+  /* Trạng thái lật trang (Flipped) */
   .page.flipped {
     transform: translateX(-110%) rotateY(-45deg) scale(0.8);
     opacity: 0;
@@ -65,7 +74,7 @@
   }
 
   /* =========================================
-     3. BACKGROUND & LỚP PHỦ NGHỆ THUẬT
+     3. BẢN NÂNG CẤP BACKGROUND & OVERLAY
   ========================================= */
   .bg {
     position: absolute;
@@ -73,14 +82,35 @@
     height: 100%;
     background-size: cover;
     background-position: center;
-    filter: brightness(0.5) contrast(1.2);
+    filter: brightness(0.4) contrast(1.3);
     transition: transform 10s ease-out;
   }
 
+  /* Hiệu ứng phóng to nhẹ khi chưa lật */
   .page:not(.flipped) .bg {
     transform: scale(1.15);
   }
 
+  /* Overlay Nâng Cấp - Hiệu ứng Gradient Động */
+  .premium-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      45deg, 
+      rgba(0, 242, 255, 0.15), 
+      rgba(188, 19, 254, 0.15)
+    );
+    mix-blend-mode: overlay;
+    animation: bg-shift 8s infinite alternate;
+    z-index: 4;
+  }
+
+  @keyframes bg-shift {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(30deg); }
+  }
+
+  /* Lưới Particle */
   .particle-canvas {
     position: absolute;
     top: 0;
@@ -91,6 +121,7 @@
     pointer-events: none;
   }
 
+  /* Bóng tối tập trung vào giữa (Vignette) */
   .overlay {
     position: absolute;
     width: 100%;
@@ -104,12 +135,14 @@
   }
 
   /* =========================================
-     4. THIẾT KẾ NỘI DUNG (CONTENT)
+     4. THIẾT KẾ NỘI DUNG CHÍNH (CONTENT)
   ========================================= */
   .content {
     position: relative;
     z-index: 10;
-    padding: 80px 25px 40px;
+    
+    /* Chỉnh lại padding để tránh vướng các nút điều hướng */
+    padding: 80px 25px 120px; 
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -137,7 +170,61 @@
   }
 
   /* =========================================
-     5. NÚT "TRỞ VỀ" - ANIMATION ĐẶC BIỆT
+     5. NÚT ĐIỀU HƯỚNG (TRƯỚC & SAU)
+  ========================================= */
+  
+  /* Class chung cho cả 2 nút */
+  .nav-trigger {
+    position: absolute;
+    
+    /* ĐÃ NÂNG LÊN 30px: Từ 40px -> 70px */
+    bottom: 75px; 
+    
+    width: 60px;
+    height: 60px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    z-index: 20;
+    transition: all 0.3s ease;
+  }
+
+  /* Nút "Tiếp tục" (Bên phải) */
+  .next-trigger {
+    right: 25px;
+    animation: pulse 2s infinite;
+  }
+
+  /* Nút "Quay lại" (Bên trái) */
+  .prev-trigger {
+    left: 25px;
+    
+    /* Làm mờ 70% theo yêu cầu (Chỉ hiển thị 30%) */
+    opacity: 0.3; 
+  }
+
+  /* Tự làm rõ khi chạm vào */
+  .prev-trigger:hover, 
+  .prev-trigger:active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(0, 242, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0); }
+  }
+
+  /* =========================================
+     6. NÚT "TRỞ VỀ" ĐẶC BIỆT
   ========================================= */
   .back-home-special {
     position: relative;
@@ -154,13 +241,11 @@
     text-transform: uppercase;
     letter-spacing: 4px;
     box-shadow: 0 0 25px rgba(0, 242, 255, 0.4);
-    /* Căn giữa nút trong container */
     margin: 0 auto;
     display: block;
     width: fit-content;
   }
 
-  /* Hiệu ứng quét sáng (Liquid Sweep) */
   .back-home-special::before {
     content: '';
     position: absolute;
@@ -188,7 +273,6 @@
     left: 100%;
   }
 
-  /* Hiệu ứng rung Glitch khi nhấn */
   .back-home-special:active {
     animation: glitch 0.3s infinite;
   }
@@ -202,7 +286,7 @@
   }
 
   /* =========================================
-     6. NÚT "THOÁT" & ĐIỀU HƯỚNG
+     7. NÚT "THOÁT" Ở GÓC TRÊN
   ========================================= */
   .exit-btn {
     position: absolute;
@@ -220,6 +304,7 @@
     transition: 0.3s;
     color: #ff8080;
     letter-spacing: 1px;
+    z-index: 50;
   }
 
   .exit-btn:hover {
@@ -228,34 +313,8 @@
     box-shadow: 0 0 20px rgba(255, 50, 50, 0.4);
   }
 
-  .next-trigger {
-    position: absolute;
-    bottom: 40px;
-    right: 30px;
-    width: 65px;
-    height: 65px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    animation: pulse 2s infinite;
-    z-index: 20;
-  }
-
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
-    70% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-  }
-
   /* =========================================
-     7. TOAST NOTIFICATION (AUTHOR)
+     8. BẢNG THÔNG BÁO TÁC GIẢ (TOAST)
   ========================================= */
   #toast {
     position: fixed;
@@ -286,6 +345,7 @@
 
   <div class="page">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
+    <div class="premium-overlay"></div>
     <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
 
@@ -298,12 +358,13 @@
         </div>
       </div>
       
-      <div class="next-trigger" onclick="handleNext()">➜</div>
+      <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
     </div>
   </div>
 
   <div class="page">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
+    <div class="premium-overlay"></div>
     <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
 
@@ -317,18 +378,25 @@
         </div>
       </div>
       
-      <div class="next-trigger" onclick="handleNext()">➜</div>
+      <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
+      
+      <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
     </div>
   </div>
 
   <div class="page">
     <div class="bg" style="background-image:url('1cd3124a89f9b5fdc7a8aee2bbea4926.png')"></div>
+    <div class="premium-overlay"></div>
     <canvas class="particle-canvas"></canvas>
     <div class="overlay"></div>
 
     <div class="content" style="justify-content: center;">
-      <h1 style="text-align:center; margin-bottom: 40px;">Hoàn Thành</h1>
+      <div>
+        <h1 style="text-align:center; margin-bottom: 40px;">Hoàn Thành</h1>
       </div>
+      
+      <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
+    </div>
   </div>
 
 </div>
@@ -341,9 +409,10 @@
   const book = document.getElementById("main-book");
   let currentPage = 0;
 
-  // Tự động sắp xếp chiều sâu Z-Index để lật chuẩn
+  // Tự động sắp xếp chiều sâu Z-Index để lật trang chuẩn 3D
   pages.forEach((p, i) => p.style.zIndex = pages.length - i);
 
+  // Hàm lùi trang (Đã bổ sung logic chuẩn)
   function handleNext() {
     if (currentPage < pages.length - 1) {
       pages[currentPage].classList.add("flipped");
@@ -351,6 +420,7 @@
     }
   }
 
+  // Hàm lùi trang (Quay lại trang trước đó)
   function handlePrev() {
     if (currentPage > 0) {
       currentPage--;
@@ -358,8 +428,8 @@
     }
   }
 
+  // Chuyển hướng
   function actionRedirect() {
-    // Chuyển hướng về index.html
     console.log("Navigating to index.html...");
     window.location.href = "index.html";
   }
@@ -391,10 +461,11 @@
   });
 
   /* ==========================================
-     PHẦN 3: HIỆU ỨNG VORTEX PARTICLES
+     PHẦN 3: HIỆU ỨNG VORTEX PARTICLES NÂNG CẤP
   ========================================== */
   function initParticles() {
     const canvases = document.querySelectorAll('.particle-canvas');
+    
     canvases.forEach(canvas => {
       const ctx = canvas.getContext('2d');
       let w = canvas.width = window.innerWidth;
@@ -408,28 +479,44 @@
           this.vx = (Math.random() - 0.5) * 0.8;
           this.vy = (Math.random() - 0.5) * 0.8;
           this.rad = Math.random() * 1.5 + 0.5;
+          
+          // Trộn ngẫu nhiên màu xanh neon và tím neon cho hạt
+          const isPurple = Math.random() > 0.5;
+          this.color = isPurple ? 'rgba(188, 19, 254, 0.5)' : 'rgba(0, 242, 255, 0.5)';
         }
+        
         update() {
           this.x += this.vx;
           this.y += this.vy;
+          
+          // Dội lại khi đụng tường
           if (this.x < 0 || this.x > w) this.vx *= -1;
           if (this.y < 0 || this.y > h) this.vy *= -1;
         }
+        
         draw() {
-          ctx.fillStyle = 'rgba(0, 242, 255, 0.4)';
+          ctx.fillStyle = this.color;
           ctx.beginPath();
           ctx.arc(this.x, this.y, this.rad, 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
-      for (let i = 0; i < 40; i++) particles.push(new Particle());
+      // Khởi tạo 45 hạt vi mô bay lơ lửng
+      for (let i = 0; i < 45; i++) {
+        particles.push(new Particle());
+      }
 
+      // Vòng lặp render siêu mượt
       function render() {
         ctx.clearRect(0, 0, w, h);
-        particles.forEach(p => { p.update(); p.draw(); });
+        particles.forEach(p => { 
+          p.update(); 
+          p.draw(); 
+        });
         requestAnimationFrame(render);
       }
+      
       render();
     });
   }
@@ -437,28 +524,52 @@
   /* ==========================================
      PHẦN 4: GESTURES (CẢM ỨNG VUỐT)
   ========================================== */
-  let touchX = 0;
-  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  // Lắng nghe thao tác chạm ngón tay
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  // Lắng nghe thao tác nhả ngón tay
   document.addEventListener('touchend', e => {
-    let diff = touchX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 60) {
-      if (diff > 0) handleNext();
-      else handlePrev();
+    touchEndX = e.changedTouches[0].clientX;
+    let swipeDistance = touchStartX - touchEndX;
+    
+    // Nếu khoảng cách vuốt > 60px thì lật trang
+    if (Math.abs(swipeDistance) > 60) {
+      if (swipeDistance > 0) {
+        handleNext(); // Vuốt sang trái
+      } else {
+        handlePrev(); // Vuốt sang phải
+      }
     }
-  });
+  }, { passive: true });
 
   /* ==========================================
-     PHẦN 5: KHỞI TẠO
+     PHẦN 5: KHỞI TẠO TOÀN BỘ CHƯƠNG TRÌNH
   ========================================== */
   window.onload = () => {
+    // Kích hoạt bảng thông báo tác giả
     const toast = document.getElementById('toast');
-    setTimeout(() => toast.classList.add('active'), 1000);
-    setTimeout(() => toast.classList.remove('active'), 5000);
+    
+    setTimeout(() => {
+      toast.classList.add('active');
+    }, 1000);
+    
+    setTimeout(() => {
+      toast.classList.remove('active');
+    }, 5000);
+    
+    // Kích hoạt hệ thống hạt bay
     initParticles();
   };
 
-  // Tự động tối ưu lại khi xoay màn hình
-  window.onresize = () => initParticles();
+  // Tự động điều chỉnh kích thước Canvas nếu lật ngang điện thoại
+  window.onresize = () => {
+    initParticles();
+  };
 
 </script>
 
