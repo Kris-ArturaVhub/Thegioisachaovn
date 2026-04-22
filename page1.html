@@ -10,7 +10,6 @@
      1. BIẾN CSS & CÀI ĐẶT CORE TỐI ƯU
   ========================================= */
   :root {
-    /* Màu sắc chủ đạo */
     --neon-cyan: #00f2ff;
     --neon-purple: #bc13fe;
     
@@ -170,15 +169,14 @@
   }
 
   /* =========================================
-     5. NÚT ĐIỀU HƯỚNG (TRƯỚC & SAU)
+     5. NÚT ĐIỀU HƯỚNG (ĐÃ NÂNG CAO 10PX)
   ========================================= */
   
-  /* Class chung cho cả 2 nút */
   .nav-trigger {
     position: absolute;
     
-    /* ĐÃ NÂNG LÊN 30px: Từ 40px -> 70px */
-    bottom: 75px; 
+    /* ĐÃ NÂNG LÊN THÊM 10px: Từ 75px -> 85px */
+    bottom: 85px; 
     
     width: 60px;
     height: 60px;
@@ -196,31 +194,23 @@
     transition: all 0.3s ease;
   }
 
-  /* Nút "Tiếp tục" (Bên phải) */
+  /* Nút "Tiếp tục" (Bên phải) - ĐÃ LOẠI BỎ HIỆU ỨNG PULSE ĐỂ GIỐNG NÚT TRÁI */
   .next-trigger {
     right: 25px;
-    animation: pulse 2s infinite;
   }
 
   /* Nút "Quay lại" (Bên trái) */
   .prev-trigger {
     left: 25px;
-    
-    /* Làm mờ 70% theo yêu cầu (Chỉ hiển thị 30%) */
-    opacity: 0.3; 
+    opacity: 0.3; /* Mờ 70% */
   }
 
-  /* Tự làm rõ khi chạm vào */
-  .prev-trigger:hover, 
-  .prev-trigger:active {
+  /* Hiệu ứng khi tương tác cho cả 2 nút */
+  .nav-trigger:hover, 
+  .nav-trigger:active {
     opacity: 1;
     background: rgba(255, 255, 255, 0.15);
-  }
-
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.4); }
-    70% { box-shadow: 0 0 0 15px rgba(0, 242, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0); }
+    transform: scale(1.1);
   }
 
   /* =========================================
@@ -379,7 +369,6 @@
       </div>
       
       <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
-      
       <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
     </div>
   </div>
@@ -409,10 +398,8 @@
   const book = document.getElementById("main-book");
   let currentPage = 0;
 
-  // Tự động sắp xếp chiều sâu Z-Index để lật trang chuẩn 3D
   pages.forEach((p, i) => p.style.zIndex = pages.length - i);
 
-  // Hàm lùi trang (Đã bổ sung logic chuẩn)
   function handleNext() {
     if (currentPage < pages.length - 1) {
       pages[currentPage].classList.add("flipped");
@@ -420,7 +407,6 @@
     }
   }
 
-  // Hàm lùi trang (Quay lại trang trước đó)
   function handlePrev() {
     if (currentPage > 0) {
       currentPage--;
@@ -428,40 +414,33 @@
     }
   }
 
-  // Chuyển hướng
   function actionRedirect() {
-    console.log("Navigating to index.html...");
     window.location.href = "index.html";
   }
 
   /* ==========================================
-     PHẦN 2: LOGIC TỰ ĐỘNG GẮN NÚT THEO TRANG
+     PHẦN 2: LOGIC TỰ ĐỘNG GẮN NÚT
   ========================================== */
   pages.forEach((page, index) => {
     const contentBox = page.querySelector('.content');
 
-    // NẾU LÀ TRANG CUỐI CÙNG
     if (index === pages.length - 1) {
       const backBtn = document.createElement('button');
       backBtn.className = 'back-home-special';
       backBtn.innerHTML = 'TRỞ VỀ';
       backBtn.onclick = actionRedirect;
-      
       contentBox.appendChild(backBtn);
-    } 
-    // NẾU LÀ CÁC TRANG TRƯỚC (Trang 1, 2,...)
-    else {
+    } else {
       const exitBtn = document.createElement('div');
       exitBtn.className = 'exit-btn';
       exitBtn.innerText = 'Thoát';
       exitBtn.onclick = actionRedirect;
-      
       contentBox.appendChild(exitBtn);
     }
   });
 
   /* ==========================================
-     PHẦN 3: HIỆU ỨNG VORTEX PARTICLES NÂNG CẤP
+     PHẦN 3: HIỆU ỨNG VORTEX PARTICLES
   ========================================== */
   function initParticles() {
     const canvases = document.querySelectorAll('.particle-canvas');
@@ -479,8 +458,6 @@
           this.vx = (Math.random() - 0.5) * 0.8;
           this.vy = (Math.random() - 0.5) * 0.8;
           this.rad = Math.random() * 1.5 + 0.5;
-          
-          // Trộn ngẫu nhiên màu xanh neon và tím neon cho hạt
           const isPurple = Math.random() > 0.5;
           this.color = isPurple ? 'rgba(188, 19, 254, 0.5)' : 'rgba(0, 242, 255, 0.5)';
         }
@@ -488,8 +465,6 @@
         update() {
           this.x += this.vx;
           this.y += this.vy;
-          
-          // Dội lại khi đụng tường
           if (this.x < 0 || this.x > w) this.vx *= -1;
           if (this.y < 0 || this.y > h) this.vy *= -1;
         }
@@ -502,21 +477,13 @@
         }
       }
 
-      // Khởi tạo 45 hạt vi mô bay lơ lửng
-      for (let i = 0; i < 45; i++) {
-        particles.push(new Particle());
-      }
+      for (let i = 0; i < 45; i++) particles.push(new Particle());
 
-      // Vòng lặp render siêu mượt
       function render() {
         ctx.clearRect(0, 0, w, h);
-        particles.forEach(p => { 
-          p.update(); 
-          p.draw(); 
-        });
+        particles.forEach(p => { p.update(); p.draw(); });
         requestAnimationFrame(render);
       }
-      
       render();
     });
   }
@@ -525,52 +492,26 @@
      PHẦN 4: GESTURES (CẢM ỨNG VUỐT)
   ========================================== */
   let touchStartX = 0;
-  let touchEndX = 0;
-
-  // Lắng nghe thao tác chạm ngón tay
-  document.addEventListener('touchstart', e => {
-    touchStartX = e.touches[0].clientX;
-  }, { passive: true });
-
-  // Lắng nghe thao tác nhả ngón tay
+  document.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX, { passive: true });
   document.addEventListener('touchend', e => {
-    touchEndX = e.changedTouches[0].clientX;
-    let swipeDistance = touchStartX - touchEndX;
-    
-    // Nếu khoảng cách vuốt > 60px thì lật trang
-    if (Math.abs(swipeDistance) > 60) {
-      if (swipeDistance > 0) {
-        handleNext(); // Vuốt sang trái
-      } else {
-        handlePrev(); // Vuốt sang phải
-      }
+    let diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 60) {
+      if (diff > 0) handleNext();
+      else handlePrev();
     }
   }, { passive: true });
 
   /* ==========================================
-     PHẦN 5: KHỞI TẠO TOÀN BỘ CHƯƠNG TRÌNH
+     PHẦN 5: KHỞI TẠO
   ========================================== */
   window.onload = () => {
-    // Kích hoạt bảng thông báo tác giả
     const toast = document.getElementById('toast');
-    
-    setTimeout(() => {
-      toast.classList.add('active');
-    }, 1000);
-    
-    setTimeout(() => {
-      toast.classList.remove('active');
-    }, 5000);
-    
-    // Kích hoạt hệ thống hạt bay
+    setTimeout(() => toast.classList.add('active'), 1000);
+    setTimeout(() => toast.classList.remove('active'), 5000);
     initParticles();
   };
 
-  // Tự động điều chỉnh kích thước Canvas nếu lật ngang điện thoại
-  window.onresize = () => {
-    initParticles();
-  };
-
+  window.onresize = () => initParticles();
 </script>
 
 </body>
