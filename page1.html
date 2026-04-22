@@ -139,8 +139,6 @@
   .content {
     position: relative;
     z-index: 10;
-    
-    /* Chỉnh lại padding để tránh vướng các nút điều hướng */
     padding: 80px 25px 120px; 
     height: 100%;
     display: flex;
@@ -169,14 +167,12 @@
   }
 
   /* =========================================
-     5. NÚT ĐIỀU HƯỚNG (ĐÃ NÂNG CAO 10PX)
+     5. NÚT ĐIỀU HƯỚNG (ĐỒNG BỘ 100%)
   ========================================= */
   
   .nav-trigger {
     position: absolute;
-    
-    /* ĐÃ NÂNG LÊN THÊM 10px: Từ 75px -> 85px */
-    bottom: 85px; 
+    bottom: 85px; /* Giữ vị trí cao thêm 10px như bạn muốn */
     
     width: 60px;
     height: 60px;
@@ -192,20 +188,22 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     z-index: 20;
     transition: all 0.3s ease;
+    
+    /* MỜ KHOẢNG 70% (Chỉ hiện 30%) - Áp dụng cho cả 2 nút */
+    opacity: 0.3; 
   }
 
-  /* Nút "Tiếp tục" (Bên phải) - ĐÃ LOẠI BỎ HIỆU ỨNG PULSE ĐỂ GIỐNG NÚT TRÁI */
+  /* Vị trí nút bên phải */
   .next-trigger {
     right: 25px;
   }
 
-  /* Nút "Quay lại" (Bên trái) */
+  /* Vị trí nút bên trái */
   .prev-trigger {
     left: 25px;
-    opacity: 0.3; /* Mờ 70% */
   }
 
-  /* Hiệu ứng khi tương tác cho cả 2 nút */
+  /* Hiệu ứng khi chạm/di chuột vào: Cả 2 đều sáng lên như nhau */
   .nav-trigger:hover, 
   .nav-trigger:active {
     opacity: 1;
@@ -214,7 +212,7 @@
   }
 
   /* =========================================
-     6. NÚT "TRỞ VỀ" ĐẶC BIỆT
+     6. NÚT "TRỞ VỀ" ĐẶC BIỆT (TRANG CUỐI)
   ========================================= */
   .back-home-special {
     position: relative;
@@ -257,10 +255,6 @@
     color: #000;
     box-shadow: 0 0 50px var(--neon-cyan);
     transform: translateY(-5px) scale(1.05);
-  }
-
-  .back-home-special:hover::before {
-    left: 100%;
   }
 
   .back-home-special:active {
@@ -515,5 +509,5 @@
 </script>
 
 </body>
-  </html>
-  
+      </html>
+        
