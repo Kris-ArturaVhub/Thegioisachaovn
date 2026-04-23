@@ -1,10 +1,637 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <title>Page 2</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sóng biển_TGSA</title>
+
+<style>
+  /* =========================================
+     1. BIẾN CSS & CÀI ĐẶT CORE TỐI ƯU
+  ========================================= */
+  :root {
+    --neon-cyan: #00f2ff;
+    --neon-purple: #bc13fe;
+    
+    /* Thiết lập kính mờ (Glassmorphism) */
+    --glass-bg: rgba(255, 255, 255, 0.07);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    
+    /* Tốc độ khung hình */
+    --transition-speed: 0.85s;
+    --font-main: 'Segoe UI', Roboto, sans-serif;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+    
+    /* Loại bỏ highlight khi chạm trên mobile */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: #020202;
+    overflow: hidden;
+    color: white;
+    height: 100vh;
+  }
+
+  /* =========================================
+     2. HỆ THỐNG TRANG 3D (VORTEX ENGINE)
+  ========================================= */
+  .book {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    perspective: 1500px; /* Độ sâu 3D */
+  }
+
+  .page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    
+    /* Hiệu ứng chuyển động mượt mà */
+    transition: transform var(--transition-speed) cubic-bezier(0.6, 0, 0.4, 1),
+                opacity var(--transition-speed) ease;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    will-change: transform, opacity;
+  }
+
+  /* Trạng thái lật trang (Flipped) */
+  .page.flipped {
+    transform: translateX(-110%) rotateY(-45deg) scale(0.8);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* =========================================
+     3. BẢN NÂNG CẤP BACKGROUND & OVERLAY
+  ========================================= */
+  .bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.4) contrast(1.3);
+    transition: transform 10s ease-out;
+  }
+
+  /* Hiệu ứng phóng to nhẹ khi chưa lật */
+  .page:not(.flipped) .bg {
+    transform: scale(1.15);
+  }
+
+  /* Overlay Nâng Cấp - Hiệu ứng Gradient Động */
+  .premium-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      45deg, 
+      rgba(0, 242, 255, 0.15), 
+      rgba(188, 19, 254, 0.15)
+    );
+    mix-blend-mode: overlay;
+    animation: bg-shift 8s infinite alternate;
+    z-index: 4;
+  }
+
+  @keyframes bg-shift {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(30deg); }
+  }
+
+  /* Lưới Particle */
+  .particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* Bóng tối tập trung vào giữa (Vignette) */
+  .overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      circle at center, 
+      transparent 0%, 
+      rgba(0,0,0,0.85) 100%
+    );
+    z-index: 6;
+  }
+
+  /* =========================================
+     4. THIẾT KẾ NỘI DUNG CHÍNH (CONTENT)
+  ========================================= */
+  .content {
+    position: relative;
+    z-index: 10;
+    padding: 80px 25px 120px; 
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  h1 {
+    font-size: 40px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(0, 242, 255, 0.6);
+    margin-bottom: 10px;
+  }
+
+  .description {
+    font-size: 13px;
+    line-height: 1.6;
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    padding: 20px;
+    border-radius: 18px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+  }
+
+  /* =========================================
+     5. NÚT ĐIỀU HƯỚNG (ĐỒNG BỘ 100%)
+  ========================================= */
+  
+/* 1. Thiết lập chung cho cả 2 nút: Mờ 70%, nâng cao lên 95px */
+.nav-trigger {
+  position: absolute;
+  bottom: 95px; /* Đã nâng lên thêm để tránh cấn menu hệ thống */
+  width: 60px;
+  height: 60px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  z-index: 20;
+  transition: all 0.3s ease;
+  
+  /* QUAN TRỌNG: Mặc định mờ 70% cho CẢ HAI nút */
+  opacity: 0.3; 
+}
+
+/* 2. Vị trí nút bên phải */
+.next-trigger {
+  right: 25px;
+  /* Đã xóa dòng animation: pulse... ở đây để nút không rung nữa */
+}
+
+/* 3. Vị trí nút bên trái */
+.prev-trigger {
+  left: 25px;
+}
+
+/* 4. Hiệu ứng khi chạm: Sáng lên 100% */
+.nav-trigger:hover, 
+.nav-trigger:active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+  
+
+
+  /* =========================================
+     6. NÚT "TRỞ VỀ" ĐẶC BIỆT (TRANG CUỐI)
+  ========================================= */
+  .back-home-special {
+    position: relative;
+    padding: 18px 45px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    background: transparent;
+    border: 2px solid var(--neon-cyan);
+    border-radius: 12px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.5s;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    box-shadow: 0 0 25px rgba(0, 242, 255, 0.4);
+    margin: 0 auto;
+    display: block;
+    width: fit-content;
+  }
+
+  .back-home-special::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.6), 
+      transparent
+    );
+    transition: 0.6s;
+  }
+
+  .back-home-special:hover {
+    background: var(--neon-cyan);
+    color: #000;
+    box-shadow: 0 0 50px var(--neon-cyan);
+    transform: translateY(-5px) scale(1.05);
+  }
+
+  .back-home-special:active {
+    animation: glitch 0.3s infinite;
+  }
+
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    25% { transform: translate(-3px, 3px); }
+    50% { transform: translate(3px, -3px); }
+    75% { transform: translate(-3px, -3px); }
+    100% { transform: translate(0); }
+  }
+
+  /* =========================================
+     7. NÚT "THOÁT" Ở GÓC TRÊN
+  ========================================= */
+  .exit-btn {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    background: rgba(255, 50, 50, 0.15);
+    border: 1px solid rgba(255, 50, 50, 0.4);
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    transition: 0.3s;
+    color: #ff8080;
+    letter-spacing: 1px;
+    z-index: 50;
+  }
+
+  .exit-btn:hover {
+    background: rgba(255, 50, 50, 0.6);
+    color: white;
+    box-shadow: 0 0 20px rgba(255, 50, 50, 0.4);
+  }
+
+  /* =========================================
+     8. BẢNG THÔNG BÁO TÁC GIẢ (TOAST)
+  ========================================= */
+  #toast {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    border: 1px solid var(--neon-cyan);
+    padding: 14px 30px;
+    border-radius: 50px;
+    color: var(--neon-cyan);
+    font-weight: bold;
+    z-index: 1000;
+    box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+    transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  #toast.active { top: 40px; }
+
+</style>
 </head>
+
 <body>
-  <h1>Đây là trang 2</h1>
-  <a href="index.html">Quay lại</a>
+
+<div id="toast">Made by Kris Artura</div>
+
+<div class="book" id="main-book">
+
+  <div class="page">
+    <div class="bg" style="background-image:url('file_00000000532071fdaa9ea80640c58d7d.png')"></div>
+    <div class="premium-overlay"></div>
+    <canvas class="particle-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <div class="content">
+      <div>
+        <h1>Thế giới mới</h1>
+        <div class="description">
+          Hướng dẫn đọc:<br>
+          Vuốt sang trái để qua trang<br>
+          Vuốt sang phải để quay lại trang<br>
+          hoặc nhấn mũi tên ở dưới<br>
+          Nhấn "thoát" ở trên để về sảnh<br>
+          Nhấn "trở về" ở cuối trang để về sảnh.<br>
+          Chúc vui vẻ.
+        </div>
+      </div>
+      
+      <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="bg" style="background-image:url('file_00000000532071fdaa9ea80640c58d7d.png')"></div>
+    <div class="premium-overlay"></div>
+    <canvas class="particle-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <div class="content">
+      <div>
+
+
+        
+        <h3>Trang1</h3>
+        <div class="description">
+          Cơn mưa bắt đầu từ khi nào, cô bé cũng không rõ nữa. Chỉ biết rằng khi em ngẩng đầu lên, bầu trời đã phủ kín bởi những tầng mây nặng trĩu, và từng giọt nước lạnh buốt đang rơi xuống, dồn dập như chưa từng có ý định dừng lại.<br>
+          Em đứng giữa con đường cũ—nơi từng là phố xá ồn ào, giờ chỉ còn lại những khoảng trống im lặng. Mưa xóa nhòa mọi thứ. Những vết nứt trên mặt đất, những mảnh bê tông vỡ vụn… tất cả như đang tan ra, trôi đi cùng dòng nước.<br>
+          Em không chạy.<br>
+          Mưa thấm ướt mái tóc, len qua từng lớp áo, chạm vào da thịt lạnh lẽo. Nhưng em vẫn đứng đó, như muốn cảm nhận trọn vẹn từng giọt nước đang rơi xuống—như thể đó không phải là mưa, mà là một điều gì khác… một sự gột rửa.<br>
+          Ngày trước, em từng rất sợ mưa.
+        </div>
+      </div>
+      
+      <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
+      <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
+    </div>
+  </div>
+
+
+
+  
+  <div class="page">
+    <div class="bg" style="background-image:url('file_00000000532071fdaa9ea80640c58d7d.png')"></div>
+    <div class="premium-overlay"></div>
+    <canvas class="particle-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <div class="content">
+      <div>
+        <h3>Trang2</h3>
+        <div class="description">
+          ...<br>
+          Mưa đồng nghĩa với mất điện, với những con đường ngập nước, với tiếng người lớn cáu gắt và những cánh cửa đóng chặt. Mưa là thứ khiến con người thu mình lại, xa cách nhau hơn.<br>
+          Nhưng hôm nay, cơn mưa này… lại khác.<br>
+          Em bước chậm về phía trước. Nước chảy thành dòng dưới chân, mang theo bụi bẩn, mang theo những thứ đã cũ kỹ. Một chiếc lá nhỏ trôi qua, xanh non đến lạ, dù trước đó em chưa từng thấy nó tồn tại ở đây.<br>
+          Em cúi xuống, nhặt lấy chiếc lá.<br>
+          Nó run rẩy trong lòng bàn tay em, như một sinh vật bé nhỏ vừa được sinh ra. Em khẽ siết nhẹ, rồi lại buông lỏng, sợ rằng chỉ cần mạnh tay hơn một chút, nó sẽ biến mất.<br>
+          “Vậy ra… vẫn còn sao?”
+        </div>
+      </div>
+      
+      <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
+      <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
+    </div>
+  </div>
+
+
+
+  
+<div class="page">
+    <div class="bg" style="background-image:url('file_00000000532071fdaa9ea80640c58d7d.png')"></div>
+    <div class="premium-overlay"></div>
+    <canvas class="particle-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <div class="content">
+      <div>
+        <h3>Trang3</h3>
+        <div class="description">
+          ...<br>
+          Giọng em nhỏ đến mức bị tiếng mưa nuốt chửng.<br>
+          Ngày trước, người ta nói thiên nhiên đã cạn kiệt. Rằng những thứ xanh tươi chỉ còn lại trong sách vở và ký ức. Rằng con người phải xây dựng một thế giới khác—một thế giới hoàn hảo hơn, sạch sẽ hơn, được kiểm soát hoàn toàn.<br>
+          Nhưng rồi, chính cái “hoàn hảo” đó lại khiến mọi thứ trở nên vô hồn.<br>
+          Cơn mưa nặng hạt hơn.<br>
+          Em ngẩng đầu lên, để mặc cho nước chảy qua gương mặt mình. Không rõ là mưa, hay là thứ gì khác đang trào ra từ trong mắt. Chỉ biết rằng, lần đầu tiên em không muốn lau đi.<br>
+          Phía trước, một mảng tường đổ sụp để lộ ra khoảng đất tối. Nhưng từ trong bóng tối ấy, những mầm cây đang vươn lên. Nhỏ bé, yếu ớt… nhưng kiên trì.
+        </div>
+      </div>
+      
+      <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
+      <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
+    </div>
+</div>
+
+
+  <div class="page">
+    <div class="bg" style="background-image:url('file_00000000532071fdaa9ea80640c58d7d.png')"></div>
+    <div class="premium-overlay"></div>
+    <canvas class="particle-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <div class="content">
+      <div>
+        <h3>Trang4</h3>
+        <div class="description">
+          Em bước lại gần.<br>
+Mỗi bước chân như lún sâu hơn vào dòng nước, nhưng em không dừng lại. Bởi em chợt hiểu, nếu đứng yên, mọi thứ sẽ lại bị cuốn trôi.<br>
+Em quỳ xuống bên những mầm cây, đưa tay che chắn cho chúng khỏi dòng nước chảy xiết. Hành động ấy gần như vô nghĩa—mưa vẫn rơi, nước vẫn dâng. Nhưng em vẫn làm.<br>
+Bởi có những điều, không phải vì có thể giữ được… mà vì không muốn buông bỏ.<br>
+Cơn mưa vẫn chưa dứt.<br>
+Nhưng đâu đó, trong tiếng ào ạt ấy, em nghe thấy một âm thanh rất khẽ—tiếng đất nứt ra, tiếng rễ cây bám sâu hơn vào lòng đất, tiếng sự sống đang âm thầm trở lại.<br>
+Em khẽ mỉm cười.
+          
+        </div>
+      </div>
+      
+      <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
+      <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
+    </div>
+  </div>
+
+
+    <div class="page">
+    <div class="bg" style="background-image:url('file_00000000532071fdaa9ea80640c58d7d.png')"></div>
+    <div class="premium-overlay"></div>
+    <canvas class="particle-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <div class="content">
+      <div>
+        <h3>Trang5</h3>
+        <div class="description">
+          Có lẽ, “thế giới mới” không phải là thứ xuất hiện sau khi mọi thứ cũ biến mất. Nó là thứ đang hình thành ngay trong khoảnh khắc này—giữa mưa, giữa đổ nát, giữa những điều tưởng chừng đã kết thúc.<br>
+Em đứng dậy, vẫn giữ chiếc lá nhỏ trong tay.<br>
+Mưa không ngừng rơi, như thể bầu trời đang khóc.<br>
+Nhưng lần này, em không còn thấy buồn nữa.<br>
+Vì em biết<br>
+Sau cơn mưa này, sẽ có thứ gì đó bắt đầu..<br>
+          
+        </div>
+      </div>
+      
+      <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
+      <div class="nav-trigger next-trigger" onclick="handleNext()">➜</div>
+    </div>
+    </div>
+
+  
+  
+  <div class="page">
+    <div class="bg" style="background-image:url('file_00000000532071fdaa9ea80640c58d7d.png')"></div>
+    <div class="premium-overlay"></div>
+    <canvas class="particle-canvas"></canvas>
+    <div class="overlay"></div>
+
+    <div class="content" style="justify-content: center;">
+      <div>
+        <h1 style="text-align:center; margin-bottom: 40px;">Hoàn Thành</h1>
+      </div>
+      
+      <div class="nav-trigger prev-trigger" onclick="handlePrev()">⬅</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ==========================================
+     PHẦN 1: CORE NAVIGATION (LẬT TRANG)
+  ========================================== */
+  const pages = document.querySelectorAll(".page");
+  const book = document.getElementById("main-book");
+  let currentPage = 0;
+
+  pages.forEach((p, i) => p.style.zIndex = pages.length - i);
+
+  function handleNext() {
+    if (currentPage < pages.length - 1) {
+      pages[currentPage].classList.add("flipped");
+      currentPage++;
+    }
+  }
+
+  function handlePrev() {
+    if (currentPage > 0) {
+      currentPage--;
+      pages[currentPage].classList.remove("flipped");
+    }
+  }
+
+  function actionRedirect() {
+    window.location.href = "index.html";
+  }
+
+  /* ==========================================
+     PHẦN 2: LOGIC TỰ ĐỘNG GẮN NÚT
+  ========================================== */
+  pages.forEach((page, index) => {
+    const contentBox = page.querySelector('.content');
+
+    if (index === pages.length - 1) {
+      const backBtn = document.createElement('button');
+      backBtn.className = 'back-home-special';
+      backBtn.innerHTML = 'TRỞ VỀ';
+      backBtn.onclick = actionRedirect;
+      contentBox.appendChild(backBtn);
+    } else {
+      const exitBtn = document.createElement('div');
+      exitBtn.className = 'exit-btn';
+      exitBtn.innerText = 'Thoát';
+      exitBtn.onclick = actionRedirect;
+      contentBox.appendChild(exitBtn);
+    }
+  });
+
+  /* ==========================================
+     PHẦN 3: HIỆU ỨNG VORTEX PARTICLES
+  ========================================== */
+  function initParticles() {
+    const canvases = document.querySelectorAll('.particle-canvas');
+    
+    canvases.forEach(canvas => {
+      const ctx = canvas.getContext('2d');
+      let w = canvas.width = window.innerWidth;
+      let h = canvas.height = window.innerHeight;
+      let particles = [];
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * w;
+          this.y = Math.random() * h;
+          this.vx = (Math.random() - 0.5) * 0.8;
+          this.vy = (Math.random() - 0.5) * 0.8;
+          this.rad = Math.random() * 1.5 + 0.5;
+          const isPurple = Math.random() > 0.5;
+          this.color = isPurple ? 'rgba(188, 19, 254, 0.5)' : 'rgba(0, 242, 255, 0.5)';
+        }
+        
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          if (this.x < 0 || this.x > w) this.vx *= -1;
+          if (this.y < 0 || this.y > h) this.vy *= -1;
+        }
+        
+        draw() {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.rad, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < 45; i++) particles.push(new Particle());
+
+      function render() {
+        ctx.clearRect(0, 0, w, h);
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(render);
+      }
+      render();
+    });
+  }
+
+  /* ==========================================
+     PHẦN 4: GESTURES (CẢM ỨNG VUỐT)
+  ========================================== */
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX, { passive: true });
+  document.addEventListener('touchend', e => {
+    let diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 60) {
+      if (diff > 0) handleNext();
+      else handlePrev();
+    }
+  }, { passive: true });
+
+  /* ==========================================
+     PHẦN 5: KHỞI TẠO
+  ========================================== */
+  window.onload = () => {
+    const toast = document.getElementById('toast');
+    setTimeout(() => toast.classList.add('active'), 1000);
+    setTimeout(() => toast.classList.remove('active'), 5000);
+    initParticles();
+  };
+
+  window.onresize = () => initParticles();
+</script>
+
 </body>
-</html>
+      </html>
+        
