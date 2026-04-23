@@ -3,145 +3,151 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
-        #gameCanvas { display: block; }
+        body { margin: 0; overflow: hidden; background: #020202; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; }
         #ui {
-            position: absolute; top: 20px; left: 20px; color: #00f2ff;
-            font-size: 20px; pointer-events: none; text-shadow: 0 0 10px #00f2ff;
+            position: absolute; top: 20px; left: 20px; color: #fff;
+            font-size: 18px; pointer-events: none; letter-spacing: 2px;
         }
-        .msg {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: white; text-align: center; display: none;
-        }
-        button {
-            padding: 10px 25px; background: #00f2ff; border: none; 
-            border-radius: 5px; font-weight: bold; cursor: pointer;
-        }
+        .neon-text { text-shadow: 0 0 10px #fff200, 0 0 20px #ff00de; }
     </style>
 </head>
 <body>
 
-    <div id="ui">Score: <span id="score">0</span></div>
-    <div id="gameOver" class="msg">
-        <h1>GAME OVER</h1>
-        <button onclick="resetGame()">CHƠI LẠI</button>
-    </div>
-
-    
-    <canvas id="gameCanvas"></canvas>
+<div id="ui" class="neon-text">Score: <span id="score">0</span></div>
+<canvas id="starGame"></canvas>
 
 <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('score');
-    const gameOverEl = document.getElementById('gameOver');
+const canvas = document.getElementById('starGame');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-    let score = 0;
-    let gameActive = true;
-    let obstacles = [];
-    let particles = [];
+let score = 0;
+let obstacles = [];
+let starAngle = 0;
+// Mảng lưu vết dải sáng (tối ưu hiệu năng)
+let trail = []; 
 
-    // Cấu hình Phi thuyền
-    const player = {
-        x: canvas.width / 2,
-        y: canvas.height - 100,
-        width: 40,
-        height: 50,
-        color: '#00f2ff'
-    };
+const star = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    size: 25,
+    targetX: canvas.width / 2,
+    targetY: canvas.height / 2
+};
 
-    // Điều khiển bằng Touch/Mouse
-    function movePlayer(e) {
-        if (!gameActive) return;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        // Giữ phi thuyền mượt mà theo ngón tay
-        player.x = clientX - player.width / 2;
+// Hàm vẽ ngôi sao 5 cánh
+function drawStar(x, y, r, p, m, angle) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.moveTo(0, 0 - r);
+    for (let i = 0; i < p; i++) {
+        ctx.rotate(Math.PI / p);
+        ctx.lineTo(0, 0 - (r * m));
+        ctx.rotate(Math.PI / p);
+        ctx.lineTo(0, 0 - r);
     }
+    ctx.fill();
+    ctx.restore();
+}
 
-    window.addEventListener('touchmove', movePlayer, { passive: false });
-    window.addEventListener('mousemove', movePlayer);
+// Điều khiển tự do X, Y
+function updatePosition(e) {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    star.targetX = clientX;
+    star.targetY = clientY;
+}
 
-    class Obstacle {
-        constructor() {
-            this.width = Math.random() * 40 + 20;
-            this.height = this.width;
-            this.x = Math.random() * (canvas.width - this.width);
-            this.y = -this.height;
-            this.speed = Math.random() * 3 + 2 + (score / 10); // Khó dần theo điểm
-        }
-        update() {
-            this.y += this.speed;
-            // Vẽ chướng ngại vật (hình vuông neon)
-            ctx.strokeStyle = '#bc13fe';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(this.x, this.y, this.width, this.height);
-        }
+window.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    updatePosition(e);
+}, { passive: false });
+window.addEventListener('mousemove', updatePosition);
+
+class Asteroid {
+    constructor() {
+        this.r = Math.random() * 30 + 15; // Kích thước ngẫu nhiên
+        this.x = Math.random() * canvas.width;
+        this.y = -this.r;
+        this.speed = Math.random() * 4 + 2; // Tốc độ ngẫu nhiên
+        this.color = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`;
     }
-
-    function spawnObstacle() {
-        if (gameActive && Math.random() < 0.05) {
-            obstacles.push(new Obstacle());
-        }
-    }
-
-    function checkCollision(rect1, rect2) {
-        return rect1.x < rect2.x + rect2.width &&
-               rect1.x + rect1.width > rect2.x &&
-               rect1.y < rect2.y + rect2.height &&
-               rect1.y + rect1.height > rect2.y;
-    }
-
-    function update() {
-        if (!gameActive) return;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Vẽ Phi thuyền (Hình tam giác Neon)
-        ctx.fillStyle = player.color;
+    update() {
+        this.y += this.speed;
         ctx.beginPath();
-        ctx.moveTo(player.x + player.width / 2, player.y);
-        ctx.lineTo(player.x, player.y + player.height);
-        ctx.lineTo(player.x + player.width, player.y + player.height);
-        ctx.closePath();
-        ctx.fill();
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#00f2ff';
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#bc13fe';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+}
 
-        // Xử lý chướng ngại vật
-        obstacles.forEach((obs, index) => {
-            obs.update();
+function gameLoop() {
+    // Tạo nền mờ dần để tạo hiệu ứng motion blur nhẹ
+    ctx.fillStyle = 'rgba(2, 2, 2, 0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Check va chạm
-            if (checkCollision(player, obs)) {
-                gameActive = false;
-                gameOverEl.style.display = 'block';
-            }
+    // 1. Cập nhật vị trí mượt mà (Easing)
+    star.x += (star.targetX - star.x) * 0.15;
+    star.y += (star.targetY - star.y) * 0.15;
 
-            // Tính điểm khi vượt qua
-            if (obs.y > canvas.height) {
-                obstacles.splice(index, 1);
-                score++;
-                scoreEl.innerText = score;
-            }
-        });
+    // 2. Xoay ngôi sao (10 vòng/phút = 1 độ/frame ở 60fps)
+    starAngle += Math.PI / 180;
 
-        spawnObstacle();
-        requestAnimationFrame(update);
+    // 3. Vẽ dải sáng (Trail) - Tối ưu: chỉ lưu 10 điểm gần nhất
+    trail.push({x: star.x, y: star.y});
+    if (trail.length > 12) trail.shift();
+    
+    trail.forEach((t, i) => {
+        ctx.fillStyle = `rgba(255, 242, 0, ${i / 20})`;
+        drawStar(t.x, t.y, star.size * (i / 12), 5, 0.5, starAngle);
+    });
+
+    // 4. Vẽ ngôi sao chính (Neon Gold)
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#fff200';
+    ctx.fillStyle = '#fff200';
+    drawStar(star.x, star.y, star.size, 5, 0.4, starAngle);
+    ctx.shadowBlur = 0;
+
+    // 5. Quản lý Thiên thạch (Giới hạn tối đa 4)
+    if (obstacles.length < 4 && Math.random() < 0.03) {
+        obstacles.push(new Asteroid());
     }
 
-    function resetGame() {
-        score = 0;
-        scoreEl.innerText = 0;
-        obstacles = [];
-        gameActive = true;
-        gameOverEl.style.display = 'none';
-        update();
-    }
+    obstacles.forEach((obs, i) => {
+        obs.update();
+        
+        // Kiểm tra va chạm (Đơn giản bằng khoảng cách)
+        const dx = star.x - obs.x;
+        const dy = star.y - obs.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < star.size + obs.r) {
+            // Hiệu ứng khi va chạm (tạm thời chỉ reset score)
+            score = 0;
+            scoreEl.innerText = score;
+            obstacles.splice(i, 1);
+        }
 
-    update();
+        if (obs.y > canvas.height + obs.r) {
+            obstacles.splice(i, 1);
+            score++;
+            scoreEl.innerText = score;
+        }
+    });
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
 </script>
 </body>
 </html>
+
