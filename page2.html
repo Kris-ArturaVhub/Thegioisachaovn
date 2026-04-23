@@ -56,6 +56,8 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    backface-visibility: hidden; /* Ngăn trang dưới hiện xuyên qua trang trên */
+  background: #020202; /* Đảm bảo mỗi trang có nền đen đặc, không bị trong suốt */
     
     /* Hiệu ứng chuyển động mượt mà */
     transition: transform var(--transition-speed) cubic-bezier(0.6, 0, 0.4, 1),
