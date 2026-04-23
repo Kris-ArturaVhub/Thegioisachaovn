@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        #gameCanvas { display: block; }
+        #ui {
+            position: absolute; top: 20px; left: 20px; color: #00f2ff;
+            font-size: 20px; pointer-events: none; text-shadow: 0 0 10px #00f2ff;
+        }
+        .msg {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; text-align: center; display: none;
+        }
+        button {
+            padding: 10px 25px; background: #00f2ff; border: none; 
+            border-radius: 5px; font-weight: bold; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">Score: <span id="score">0</span></div>
+    <div id="gameOver" class="msg">
+        <h1>GAME OVER</h1>
+        <button onclick="resetGame()">CHƠI LẠI</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const gameOverEl = document.getElementById('gameOver');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let score = 0;
+    let gameActive = true;
+    let obstacles = [];
+    let particles = [];
+
+    // Cấu hình Phi thuyền
+    const player = {
+        x: canvas.width / 2,
+        y: canvas.height - 100,
+        width: 40,
+        height: 50,
+        color: '#00f2ff'
+    };
+
+    // Điều khiển bằng Touch/Mouse
+    function movePlayer(e) {
+        if (!gameActive) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        // Giữ phi thuyền mượt mà theo ngón tay
+        player.x = clientX - player.width / 2;
+    }
+
+    window.addEventListener('touchmove', movePlayer, { passive: false });
+    window.addEventListener('mousemove', movePlayer);
+
+    class Obstacle {
+        constructor() {
+            this.width = Math.random() * 40 + 20;
+            this.height = this.width;
+            this.x = Math.random() * (canvas.width - this.width);
+            this.y = -this.height;
+            this.speed = Math.random() * 3 + 2 + (score / 10); // Khó dần theo điểm
+        }
+        update() {
+            this.y += this.speed;
+            // Vẽ chướng ngại vật (hình vuông neon)
+            ctx.strokeStyle = '#bc13fe';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+        }
+    }
+
+    function spawnObstacle() {
+        if (gameActive && Math.random() < 0.05) {
+            obstacles.push(new Obstacle());
+        }
+    }
+
+    function checkCollision(rect1, rect2) {
+        return rect1.x < rect2.x + rect2.width &&
+               rect1.x + rect1.width > rect2.x &&
+               rect1.y < rect2.y + rect2.height &&
+               rect1.y + rect1.height > rect2.y;
+    }
+
+    function update() {
+        if (!gameActive) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Vẽ Phi thuyền (Hình tam giác Neon)
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.moveTo(player.x + player.width / 2, player.y);
+        ctx.lineTo(player.x, player.y + player.height);
+        ctx.lineTo(player.x + player.width, player.y + player.height);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#00f2ff';
+
+        // Xử lý chướng ngại vật
+        obstacles.forEach((obs, index) => {
+            obs.update();
+
+            // Check va chạm
+            if (checkCollision(player, obs)) {
+                gameActive = false;
+                gameOverEl.style.display = 'block';
+            }
+
+            // Tính điểm khi vượt qua
+            if (obs.y > canvas.height) {
+                obstacles.splice(index, 1);
+                score++;
+                scoreEl.innerText = score;
+            }
+        });
+
+        spawnObstacle();
+        requestAnimationFrame(update);
+    }
+
+    function resetGame() {
+        score = 0;
+        scoreEl.innerText = 0;
+        obstacles = [];
+        gameActive = true;
+        gameOverEl.style.display = 'none';
+        update();
+    }
+
+    update();
+</script>
+</body>
+</html>
