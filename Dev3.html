@@ -3,510 +3,578 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Star V4 - Final Beta | Kris Artura</title>
+    <title>Vortex Star V4.1 - Kris Artura Ultimate</title>
     <style>
         body {
             margin: 0;
-            padding: 0;
             overflow: hidden;
-            background: #00040a;
-            font-family: 'Segoe UI', sans-serif;
+            background: #01040a; /* Màu xanh đen vũ trụ */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: none;
-            user-select: none;
         }
-        canvas { display: block; }
-        #ui-layer {
+        canvas {
+            display: block;
+        }
+        #author-tag {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            bottom: 10px;
+            right: 15px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px;
+            letter-spacing: 2px;
             pointer-events: none;
-            z-index: 10;
+            z-index: 100;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
 
-<div id="ui-layer"></div>
-<canvas id="mainCanvas"></canvas>
+<div id="author-tag">Engine by Kris Artura | V4.1 Cinematic</div>
+<canvas id="gameCanvas"></canvas>
 
 <script>
 /**
- * ============================================================================
- * PROJECT: VORTEX STAR - VERSION 4.0 (FIXED & UPGRADED)
- * AUTHOR: KRIS ARTURA
- * LOGIC: Dựa trên V1, mở rộng Class-based, xử lý dải sáng tuyệt đối.
- * ============================================================================
+ * VORTEX STAR ENGINE - VERSION 4.1 CINEMATIC
+ * Tác giả: Kris Artura
+ * * DANH SÁCH NÂNG CẤP:
+ * 1. Màu Rainbow tại cao trào (60s - 80s).
+ * 2. HP Bar hình trái tim đỏ.
+ * 3. Nhãn "PROCESS" cho thanh tiến trình.
+ * 4. Thời gian 1 phút 20 giây (80.000ms).
+ * 5. Vật lý ma sát cho thiên thạch hình Sin.
+ * 6. Viền thiên thạch thay đổi theo độ khó (Vàng đậm / Đỏ).
+ * 7. Nền vũ trụ đa lớp (Sao, Thiên hà, Hành tinh).
+ * 8. Hiệu ứng ánh sáng đích mờ hóa (Glow Fading).
  */
 
-const canvas = document.getElementById('mainCanvas');
+const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-// --- HẰNG SỐ CẤU HÌNH ---
-const SETTINGS = {
-    TOTAL_TIME: 80000,      // 1 phút 20 giây (ms)
-    PEAK_TIME: 60000,       // Khúc cao trào bắt đầu từ giây thứ 60
-    MAX_ASTEROIDS: 4,       // Giới hạn cứng số thiên thạch để tránh lỗi "quá nhiều"
-    TRAIL_SIZE: 12,         // Độ dài dải sáng
-    PLAYER_SIZE: 22,
-    STAR_POINTS: 5,
-    AUTOPILOT_Y: 0.15       // Vị trí đích (15% chiều cao màn hình)
+// ============================================================================
+// 1. CẤU HÌNH VÀ BIẾN TRẠNG THÁI
+// ============================================================================
+const GAME_STATE = {
+    PLAYING: 0,
+    GAMEOVER_FADEOUT: 1,
+    GAMEOVER_FADEIN: 2,
+    AUTOPILOT: 3,
+    FIREWORKS: 4
 };
 
-// --- BIẾN TOÀN CỤC QUẢN LÝ TRẠNG THÁI ---
-let width, height;
-let progress = 0;
-let startTime = Date.now();
-let lastTime = Date.now();
-let isGameOver = false;
-let isWin = false;
-let fadeOut = 0;
+let currentState = GAME_STATE.PLAYING;
+let opacityOverlay = 0;
 
-// Hệ thống lưu trữ đối tượng
-let particles = [];
+// THỜI GIAN: 1 phút 20 giây = 80.000ms
+const GAME_DURATION = 80000; 
+const CLIMAX_START = 60000; // Khúc khó bắt đầu từ giây thứ 60
+
+let elapsedTime = 0;
+let lastTime = performance.now();
+let progress = 0;
+let difficultyMultiplier = 1.0;
+
+const player = {
+    x: canvas.width / 2,
+    y: canvas.height * 0.8,
+    size: 22,
+    targetX: canvas.width / 2,
+    targetY: canvas.height * 0.8,
+    angle: 0,
+    hp: 3,
+    maxHp: 3,
+    invulnerable: false,
+    invulTimer: 0,
+    baseEasing: 0.15,
+    trail: []
+};
+
+// Quản lý mảng vật thể
 let asteroids = [];
 let hearts = [];
-let bgStars = [];
-let fireworks = [];
+let particles = [];
+let fireworkParticles = [];
+let universeStars = []; // Sao nền
+let nebulaGlows = [];   // Thiên hà mờ
+let staticStars = [];   // Sao ở khu vực đích
+
+let heartsSpawned = 0;
 
 // ============================================================================
-// 1. CLASS VẬT LÝ VÀ VECTOR (TĂNG ĐỘ DÀI VÀ CHỈNH CHU LOGIC)
+// 2. KHỞI TẠO NỀN VŨ TRỤ (UNIVERSE SYSTEM)
 // ============================================================================
 
-class Vector2 {
-    constructor(x, y) { this.x = x; this.y = y; }
-}
-
-class Particle {
-    constructor(x, y, color, speedMul = 1) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        const angle = Math.random() * Math.PI * 2;
-        const force = Math.random() * 4 * speedMul;
-        this.vx = Math.cos(angle) * force;
-        this.vy = Math.sin(angle) * force;
-        this.life = 1.0;
-        this.decay = Math.random() * 0.02 + 0.01;
-    }
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life -= this.decay;
-    }
-    draw() {
-        ctx.save();
-        ctx.globalAlpha = this.life;
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-}
-
-// ============================================================================
-// 2. CLASS QUẢN LÝ NGƯỜI CHƠI (NGÔI SAO)
-// ============================================================================
-
-class PlayerStar {
-    constructor() {
-        this.pos = new Vector2(window.innerWidth / 2, window.innerHeight * 0.8);
-        this.target = new Vector2(this.pos.x, this.pos.y);
-        this.hp = 3;
-        this.angle = 0;
-        this.trail = [];
-        this.invul = 0; // Thời gian bất tử sau va chạm
-    }
-
-    update(dt, currentProgress) {
-        // Di chuyển bám theo tay/chuột
-        let ease = currentProgress > 0.75 ? 0.2 : 0.12;
-        this.pos.x += (this.target.x - this.pos.x) * ease;
-        this.pos.y += (this.target.y - this.pos.y) * ease;
-
-        // Xoay 10 vòng / phút
-        this.angle += 0.05;
-
-        // Cập nhật dải sáng (Trail) - Fix lỗi chỉ hiện ở giữa
-        this.trail.push({ x: this.pos.x, y: this.pos.y });
-        if (this.trail.length > SETTINGS.TRAIL_SIZE) this.trail.shift();
-
-        if (this.invul > 0) this.invul -= dt;
-    }
-
-    draw() {
-        const isPeak = (Date.now() - startTime) > SETTINGS.PEAK_TIME;
-        const rainbowColor = `hsl(${(Date.now() / 5) % 360}, 100%, 60%)`;
-        const defaultColor = "#fff200";
-        const activeColor = isPeak ? rainbowColor : defaultColor;
-
-        // Vẽ Trail (Dải sáng đi theo sau)
-        this.trail.forEach((t, i) => {
-            const ratio = i / SETTINGS.TRAIL_SIZE;
-            ctx.save();
-            ctx.globalAlpha = ratio * 0.4;
-            this.drawStarShape(t.x, t.y, SETTINGS.PLAYER_SIZE * ratio, activeColor);
-            ctx.restore();
-        });
-
-        // Vẽ ngôi sao chính
-        if (this.invul > 0 && Math.floor(Date.now() / 100) % 2 === 0) return;
-        this.drawStarShape(this.pos.x, this.pos.y, SETTINGS.PLAYER_SIZE, activeColor);
-    }
-
-    drawStarShape(x, y, r, color) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(this.angle);
-        ctx.beginPath();
-        for (let i = 0; i < SETTINGS.STAR_POINTS * 2; i++) {
-            const radius = (i % 2 === 0) ? r : r * 0.4;
-            const angle = (i * Math.PI) / SETTINGS.STAR_POINTS;
-            ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
-        }
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.shadowBlur = isWin ? 30 : 15;
-        ctx.shadowColor = color;
-        ctx.fill();
-        ctx.restore();
-    }
-}
-
-const player = new PlayerStar();
-
-// ============================================================================
-// 3. CLASS THIÊN THẠCH VÀ VẬT PHẨM
-// ============================================================================
-
-class Asteroid {
-    constructor(isHard) {
-        this.r = Math.random() * 20 + 15;
-        this.x = Math.random() * (width - this.r * 2) + this.r;
-        this.y = -50;
-        this.isHard = isHard;
-        this.type = Math.random() > 0.7 ? 'sin' : 'straight';
-        
-        // Tốc độ và Ma sát
-        this.vy = isHard ? Math.random() * 3 + 4 : Math.random() * 2 + 2.5;
-        this.vx = 0;
-        this.friction = 0.99;
-        
-        // Sin Wave logic
-        this.amplitude = Math.random() * 50 + 30;
-        this.freq = 0.02;
-        this.offset = Math.random() * 100;
-        this.spawnX = this.x;
-
-        this.color = isHard ? "#ff3333" : "#b8860b"; // Đỏ nếu khó, vàng đậm nếu thường
-    }
-
-    update() {
-        this.vy *= this.friction; // Ma sát giống thật
-        if (this.vy < 1.5) this.vy = 1.5;
-        this.y += this.vy;
-
-        if (this.type === 'sin') {
-            this.x = this.spawnX + Math.sin(this.y * this.freq + this.offset) * this.amplitude;
-        }
-    }
-
-    draw() {
-        ctx.save();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = this.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-    }
-}
-
-// ============================================================================
-// 4. HỆ THỐNG NỀN VŨ TRỤ (VIP)
-// ============================================================================
-
-function createUniverse() {
-    bgStars = [];
+function initUniverse() {
+    // Tạo 150 ngôi sao nền lấp lánh
     for (let i = 0; i < 150; i++) {
-        bgStars.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            s: Math.random() * 2,
-            o: Math.random(),
-            v: Math.random() * 0.5 + 0.1
+        universeStars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2,
+            opacity: Math.random(),
+            speed: 0.01 + Math.random() * 0.02
+        });
+    }
+
+    // Tạo các vùng thiên hà (Nebula) mờ ảo
+    for (let i = 0; i < 3; i++) {
+        nebulaGlows.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: 150 + Math.random() * 200,
+            color: i === 0 ? 'rgba(70, 0, 150, 0.1)' : 'rgba(0, 50, 100, 0.1)'
         });
     }
 }
+initUniverse();
 
 function drawUniverse() {
-    ctx.fillStyle = "#00040a";
-    ctx.fillRect(0, 0, width, height);
+    // Màu nền không gian sâu
+    ctx.fillStyle = '#00050a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    bgStars.forEach(s => {
-        s.y += s.v;
-        if (s.y > height) s.y = 0;
-        ctx.fillStyle = `rgba(255, 255, 255, ${s.o})`;
-        ctx.fillRect(s.x, s.y, s.s, s.s);
+    // Vẽ Nebula (Thiên hà)
+    nebulaGlows.forEach(n => {
+        let grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+        grad.addColorStop(0, n.color);
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
     });
 
-    // Thiên hà mờ ảo
-    const grad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width);
-    grad.addColorStop(0, "rgba(10, 30, 70, 0.2)");
-    grad.addColorStop(1, "transparent");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, width, height);
-}
+    // Vẽ các ngôi sao lấp lánh
+    universeStars.forEach(s => {
+        s.opacity += s.speed;
+        if (s.opacity > 1 || s.opacity < 0) s.speed *= -1;
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.opacity)})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
 
-// ============================================================================
-// 5. GIAO DIỆN NGƯỜI DÙNG (UI)
-// ============================================================================
-
-function drawUI() {
-    const elapsed = Date.now() - startTime;
-    const progressPerc = Math.min(elapsed / SETTINGS.TOTAL_TIME, 1);
-    const isPeak = elapsed > SETTINGS.PEAK_TIME;
-
-    // 1. Thanh Tiến Trình (PROCESS)
-    const bw = width * 0.7;
-    const bx = (width - bw) / 2;
-    const by = 40;
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 13px Segoe UI";
-    ctx.textAlign = "left";
-    ctx.fillText("PROCESS", bx, by - 10);
-
-    ctx.strokeStyle = "rgba(255,255,255,0.2)";
-    ctx.strokeRect(bx, by, bw, 8);
-
-    const barColor = isPeak ? `hsl(${(Date.now() / 5) % 360}, 100%, 50%)` : "#fff200";
-    ctx.fillStyle = barColor;
-    ctx.fillRect(bx, by, bw * progressPerc, 8);
-
-    // 2. Thanh Máu (TRÁI TIM ĐỎ)
-    for (let i = 0; i < 3; i++) {
-        const hx = 40 + i * 35;
-        const hy = 80;
-        const active = i < player.hp;
-        drawHeartIcon(hx, hy, 12, active ? "#ff0000" : "rgba(255,255,255,0.1)");
-    }
-}
-
-function drawHeartIcon(x, y, size, color) {
+    // Vẽ một hành tinh xa xôi (Trang trí)
     ctx.save();
-    ctx.translate(x, y);
     ctx.beginPath();
-    ctx.moveTo(0, size * 0.3);
-    ctx.bezierCurveTo(0, 0, -size, 0, -size, size * 0.4);
-    ctx.bezierCurveTo(-size, size * 0.8, 0, size * 1.2, 0, size * 1.5);
-    ctx.bezierCurveTo(0, size * 1.2, size, size * 0.8, size, size * 0.4);
-    ctx.bezierCurveTo(size, 0, 0, 0, 0, size * 0.3);
-    ctx.fillStyle = color;
-    if (color !== "rgba(255,255,255,0.1)") {
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "#ff0000";
-    }
+    ctx.arc(canvas.width * 0.8, canvas.height * 0.2, 30, 0, Math.PI * 2);
+    let planetGrad = ctx.createRadialGradient(canvas.width * 0.78, canvas.height * 0.18, 5, canvas.width * 0.8, canvas.height * 0.2, 30);
+    planetGrad.addColorStop(0, '#1a2a4a');
+    planetGrad.addColorStop(1, '#000');
+    ctx.fillStyle = planetGrad;
     ctx.fill();
     ctx.restore();
 }
 
 // ============================================================================
-// 6. LOGIC GAMEPLAY CHÍNH
+// 3. LỚP ĐỐI TƯỢNG (CLASSES)
 // ============================================================================
 
-function handleCollisions() {
-    asteroids.forEach((a, i) => {
-        const dx = player.pos.x - a.x;
-        const dy = player.pos.y - a.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < player.size + a.r && player.invul <= 0) {
-            player.hp--;
-            player.invul = 1000; // 1 giây bất tử
-            // Hiệu ứng nổ
-            for (let k = 0; k < 10; k++) particles.push(new Particle(a.x, a.y, a.color));
-            asteroids.splice(i, 1);
-            if (player.hp <= 0) isGameOver = true;
-        }
-    });
-
-    // Kiểm tra ăn Tim
-    hearts.forEach((h, i) => {
-        const dx = player.pos.x - h.x;
-        const dy = player.pos.y - h.y;
-        if (Math.sqrt(dx*dx + dy*dy) < 30) {
-            if (player.hp < 3) player.hp++;
-            for (let k = 0; k < 10; k++) particles.push(new Particle(h.x, h.y, "#ff0000"));
-            hearts.splice(i, 1);
-        }
-    });
-}
-
-function spawnLogic() {
-    const elapsed = Date.now() - startTime;
-    const progressRatio = elapsed / SETTINGS.TOTAL_TIME;
-    const isHard = elapsed > SETTINGS.PEAK_TIME;
-
-    // Giới hạn số lượng thiên thạch khắt khe hơn để tránh lag
-    const maxOnScreen = isHard ? 6 : 4;
-
-    if (asteroids.length < maxOnScreen && Math.random() < 0.03) {
-        asteroids.push(new Asteroid(isHard));
-    }
-
-    // Sinh tim (Chỉ tối đa 2 lần mỗi game)
-    if (Math.random() < 0.002 && hearts.length < 1) {
-        hearts.push({ x: Math.random() * width, y: -20, vy: 2 });
-    }
-}
-
-// ============================================================================
-// 7. VÒNG LẶP RENDER (MAIN LOOP)
-// ============================================================================
-
-function update() {
-    const now = Date.now();
-    const dt = now - lastTime;
-    lastTime = now;
-
-    if (isGameOver) {
-        fadeOut += 0.01;
-        if (fadeOut >= 1) resetGame();
-        return;
-    }
-
-    if (isWin) {
-        // Autopilot mode
-        player.target.x = width / 2;
-        player.target.y = height * SETTINGS.AUTOPILOT_Y;
-        player.update(dt, 1);
-        if (Math.abs(player.pos.y - player.target.y) < 10) {
-            // Nổ pháo hoa
-            if (fireworks.length < 50) {
-                for(let i=0; i<5; i++) fireworks.push(new Particle(player.pos.x, player.pos.y, `hsl(${Math.random()*360},100%,50%)`, 2));
-            }
-        }
-    } else {
-        const elapsed = Date.now() - startTime;
-        const currentProgress = elapsed / SETTINGS.TOTAL_TIME;
+class Asteroid {
+    constructor() {
+        const isClimax = elapsedTime > CLIMAX_START;
+        this.r = Math.random() * 22 + 15;
+        this.x = Math.random() * (canvas.width - this.r * 2) + this.r;
+        this.y = -this.r;
         
-        player.update(dt, currentProgress);
-        spawnLogic();
-        handleCollisions();
-
-        if (elapsed >= SETTINGS.TOTAL_TIME) isWin = true;
+        // Thiên thạch hình sin đi chậm lại và có tính ma sát
+        this.isSinPath = Math.random() > 0.6;
+        this.friction = 0.99; // Lực cản không gian
+        
+        if (this.isSinPath) {
+            this.vy = (Math.random() * 1.5 + 1.5) * difficultyMultiplier; // Chậm hơn bình thường
+            this.sinOffset = Math.random() * Math.PI * 2;
+            this.sinSpeed = 0.015;
+            this.amplitude = 60 + Math.random() * 40;
+        } else {
+            this.vy = (Math.random() * 3 + 2.5) * difficultyMultiplier;
+        }
+        
+        this.vx = (Math.random() - 0.5) * 1.5;
+        this.baseX = this.x;
+        
+        // Viền: Vàng đậm (mặc định), Đỏ (khúc khó)
+        this.color = isClimax ? '#ff0000' : '#b8860b'; 
     }
 
-    // Cập nhật mảng vật thể
-    asteroids.forEach(a => a.update());
-    asteroids = asteroids.filter(a => a.y < height + 50);
-    
-    hearts.forEach(h => h.y += h.vy);
-    hearts = hearts.filter(h => h.y < height + 50);
+    update() {
+        // Áp dụng ma sát cho vận tốc rơi
+        this.vy *= this.friction;
+        if (this.vy < 1.2) this.vy = 1.2; // Không để dừng hẳn
 
-    particles.forEach(p => p.update());
-    particles = particles.filter(p => p.life > 0);
+        this.y += this.vy;
+        
+        if (this.isSinPath) {
+            this.x = this.baseX + Math.sin(this.y * this.sinSpeed + this.sinOffset) * this.amplitude;
+        } else {
+            this.x += this.vx;
+            this.baseX = this.x;
+        }
 
-    fireworks.forEach(f => f.update());
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Lõi tối để nổi bật viền
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fill();
+        ctx.restore();
+    }
 }
 
-function render() {
+class HeartItem {
+    constructor() {
+        this.r = 18;
+        this.x = Math.random() * (canvas.width - this.r * 2) + this.r;
+        this.y = -this.r;
+        this.vy = 2.5;
+        this.pulse = 0;
+    }
+    update() {
+        this.y += this.vy;
+        this.pulse += 0.08;
+        let scale = 1 + Math.sin(this.pulse) * 0.1;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.scale(scale, scale);
+        drawHeartPath(ctx, 0, 0, 15);
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff0000';
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+// Hàm bổ trợ vẽ trái tim
+function drawHeartPath(context, x, y, size) {
+    context.beginPath();
+    context.moveTo(x, y + size * 0.3);
+    context.bezierCurveTo(x, y, x - size, y, x - size, y + size * 0.4);
+    context.bezierCurveTo(x - size, y + size * 0.8, x, y + size * 1.3, x, y + size * 1.5);
+    context.bezierCurveTo(x, y + size * 1.3, x + size, y + size * 0.8, x + size, y + size * 0.4);
+    context.bezierCurveTo(x + size, y, x, y, x, y + size * 0.3);
+}
+
+// Lớp hạt (Particles) giữ nguyên từ bản ổn định
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y; this.color = color;
+        this.size = Math.random() * 3 + 1;
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Math.random() * 5;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.life = 1.0;
+        this.decay = 0.03;
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        this.life -= this.decay;
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+// ============================================================================
+// 4. HÀM VẼ GIAO DIỆN (UI) VÀ NGÔI SAO
+// ============================================================================
+
+function drawStarShape(x, y, r, points, m, angle, color, shadowColor, isPlayer = false) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    if (isPlayer && player.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
+        ctx.globalAlpha = 0.3;
+    }
+    ctx.beginPath();
+    ctx.moveTo(0, 0 - r);
+    for (let i = 0; i < points; i++) {
+        ctx.rotate(Math.PI / points);
+        ctx.lineTo(0, 0 - (r * m));
+        ctx.rotate(Math.PI / points);
+        ctx.lineTo(0, 0 - r);
+    }
+    ctx.fillStyle = color;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = shadowColor;
+    ctx.fill();
+    ctx.restore();
+}
+
+function drawVIPUI() {
+    // 1. Thanh Tiến Trình (PROCESS)
+    const barW = canvas.width * 0.6;
+    const barH = 10;
+    const barX = (canvas.width - barW) / 2;
+    const barY = 30;
+
+    // Chữ PROCESS hoặc TIẾN TRÌNH
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText("PROCESS / TIẾN TRÌNH", canvas.width / 2, barY - 10);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    const isClimax = elapsedTime > CLIMAX_START;
+    const fillW = barW * progress;
+    // Màu cầu vồng nếu ở khúc cao trào
+    let barColor = isClimax ? `hsl(${(Date.now() / 5) % 360}, 100%, 60%)` : '#fff200';
+    
+    ctx.fillStyle = barColor;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = barColor;
+    ctx.fillRect(barX, barY, fillW, barH);
+    ctx.shadowBlur = 0;
+
+    // 2. Thanh Máu (Hình TRÁI TIM ĐỎ)
+    for (let i = 0; i < player.maxHp; i++) {
+        let hx = 40 + i * 35;
+        let hy = 45;
+        ctx.save();
+        ctx.translate(hx, hy);
+        if (i < player.hp) {
+            drawHeartPath(ctx, 0, 0, 8);
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff0000';
+            ctx.fill();
+        } else {
+            drawHeartPath(ctx, 0, 0, 8);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+function drawDestination() {
+    if (staticStars.length === 0) {
+        for (let i = 0; i < 6; i++) {
+            staticStars.push({
+                x: canvas.width / 2 + (Math.random() - 0.5) * 180,
+                y: canvas.height * 0.15 + (Math.random() - 0.5) * 100,
+                r: Math.random() * 12 + 8,
+                angle: Math.random() * Math.PI
+            });
+        }
+    }
+
+    // Hiệu ứng ánh sáng khu vực cuối (Mờ hóa - Requirement 8)
+    // Càng ra xa thì càng mờ
+    let grad = ctx.createRadialGradient(canvas.width / 2, canvas.height * 0.15, 10, canvas.width / 2, canvas.height * 0.15, 180);
+    grad.addColorStop(0, 'rgba(255, 242, 0, 0.3)');  // Tâm sáng
+    grad.addColorStop(0.5, 'rgba(255, 242, 0, 0.1)'); // Mờ dần
+    grad.addColorStop(1, 'rgba(255, 242, 0, 0)');     // Trong suốt hoàn toàn
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height * 0.15, 180, 0, Math.PI * 2);
+    ctx.fill();
+
+    staticStars.forEach(s => {
+        s.angle += 0.01;
+        drawStarShape(s.x, s.y, s.r, 5, 0.4, s.angle, '#ffffff', '#fff200', false);
+    });
+}
+
+// ============================================================================
+// 5. VÒNG LẶP GAME (GAME LOOP)
+// ============================================================================
+
+function checkCollision(x1, y1, r1, x2, y2, r2) {
+    let dx = x1 - x2;
+    let dy = y1 - y2;
+    let dist = Math.sqrt(dx * dx + dy * dy);
+    return dist < (r1 + r2) * 0.85;
+}
+
+function updateAndDraw() {
+    let currentTime = performance.now();
+    let dt = currentTime - lastTime;
+    lastTime = currentTime;
+
     drawUniverse();
 
-    // Vùng sáng đích (Mờ hóa)
-    if (isWin || (Date.now() - startTime) > SETTINGS.PEAK_TIME * 0.9) {
-        const g = ctx.createRadialGradient(width/2, height*SETTINGS.AUTOPILOT_Y, 0, width/2, height*SETTINGS.AUTOPILOT_Y, 200);
-        g.addColorStop(0, "rgba(255, 242, 0, 0.2)");
-        g.addColorStop(1, "transparent");
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(width/2, height*SETTINGS.AUTOPILOT_Y, 200, 0, Math.PI*2);
-        ctx.fill();
+    if (currentState === GAME_STATE.PLAYING) {
+        elapsedTime += dt;
+        progress = Math.min(elapsedTime / GAME_DURATION, 1.0);
+
+        // Khúc cao trào (giây 60 đến 80)
+        const isClimax = elapsedTime > CLIMAX_START;
+        if (isClimax) difficultyMultiplier = 1.4;
+
+        if (progress >= 1.0) {
+            currentState = GAME_STATE.AUTOPILOT;
+            player.targetX = canvas.width / 2;
+            player.targetY = canvas.height * 0.15;
+            asteroids = []; hearts = [];
+        }
+
+        // Logic Spawn
+        let maxAst = isClimax ? 6 : 4;
+        if (asteroids.length < maxAst && Math.random() < 0.035 * difficultyMultiplier) {
+            asteroids.push(new Asteroid());
+        }
+
+        if (heartsSpawned < 2 && progress > (heartsSpawned === 0 ? 0.3 : 0.6) && Math.random() < 0.01) {
+            hearts.push(new HeartItem());
+            heartsSpawned++;
+        }
+
+        if (player.invulnerable) {
+            player.invulTimer -= dt;
+            if (player.invulTimer <= 0) player.invulnerable = false;
+        }
+
+        // Di chuyển player
+        player.x += (player.targetX - player.x) * (player.baseEasing * (isClimax ? 1.2 : 1.0));
+        player.y += (player.targetY - player.y) * (player.baseEasing * (isClimax ? 1.2 : 1.0));
+        player.angle += 0.03;
     }
 
-    // Vẽ vật thể
-    hearts.forEach(h => drawHeartIcon(h.x, h.y, 15, "#ff0000"));
-    asteroids.forEach(a => a.draw());
-    particles.forEach(p => p.draw());
-    fireworks.forEach(f => f.draw());
-
-    player.draw();
-    drawUI();
-
-    if (isGameOver) {
-        ctx.fillStyle = `rgba(0,0,0,${fadeOut})`;
-        ctx.fillRect(0,0,width,height);
-        ctx.fillStyle = "white";
-        ctx.font = "bold 30px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("THUA", width/2, height/2);
-        ctx.font = "16px Arial";
-        ctx.fillText("Cố lên nào!", width/2, height/2 + 40);
-    }
-
-    if (isWin && fireworks.length > 0) {
-        ctx.fillStyle = "#fff200";
-        ctx.font = "bold 30px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("XUẤT SẮC!", width/2, height/2);
-    }
-
-    requestAnimationFrame(() => {
-        update();
-        render();
+    // Vẽ Trail (Dải sáng) - Sử dụng tọa độ tuyệt đối để tránh lỗi trung tâm
+    player.trail.push({ x: player.x, y: player.y });
+    if (player.trail.length > 15) player.trail.shift();
+    
+    player.trail.forEach((t, i) => {
+        ctx.globalAlpha = i / 30;
+        let tColor = (elapsedTime > CLIMAX_START) ? `hsl(${(Date.now() / 5) % 360}, 100%, 60%)` : '#fff200';
+        drawStarShape(t.x, t.y, player.size * (i / 15), 5, 0.4, player.angle, tColor, tColor, false);
     });
+    ctx.globalAlpha = 1.0;
+
+    // Cập nhật thiên thạch & Va chạm
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+        let a = asteroids[i];
+        a.update();
+        if (currentState === GAME_STATE.PLAYING && !player.invulnerable && checkCollision(player.x, player.y, player.size, a.x, a.y, a.r)) {
+            player.hp--;
+            player.invulnerable = true;
+            player.invulTimer = 1500;
+            for (let k = 0; k < 15; k++) particles.push(new Particle(a.x, a.y, a.color));
+            asteroids.splice(i, 1);
+            if (player.hp <= 0) currentState = GAME_STATE.GAMEOVER_FADEOUT;
+        }
+        else if (a.y > canvas.height + 50) asteroids.splice(i, 1);
+    }
+
+    // Cập nhật vật phẩm hồi máu
+    for (let i = hearts.length - 1; i >= 0; i--) {
+        let h = hearts[i];
+        h.update();
+        if (currentState === GAME_STATE.PLAYING && checkCollision(player.x, player.y, player.size, h.x, h.y, h.r)) {
+            if (player.hp < player.maxHp) player.hp++;
+            for (let k = 0; k < 15; k++) particles.push(new Particle(h.x, h.y, '#ff0000'));
+            hearts.splice(i, 1);
+        } else if (h.y > canvas.height + 50) hearts.splice(i, 1);
+    }
+
+    // Vẽ đích & UI
+    if (progress > 0.75 || currentState === GAME_STATE.AUTOPILOT) drawDestination();
+    drawVIPUI();
+
+    // Vẽ Player chính
+    let pColor = (elapsedTime > CLIMAX_START) ? `hsl(${(Date.now() / 5) % 360}, 100%, 60%)` : '#fff200';
+    drawStarShape(player.x, player.y, player.size, 5, 0.4, player.angle, pColor, pColor, true);
+
+    // Logic về đích tự động
+    if (currentState === GAME_STATE.AUTOPILOT) {
+        player.x += (player.targetX - player.x) * 0.05;
+        player.y += (player.targetY - player.y) * 0.05;
+        if (Math.abs(player.x - player.targetX) < 5 && Math.abs(player.y - player.targetY) < 5) {
+            currentState = GAME_STATE.FIREWORKS;
+        }
+    }
+
+    // Pháo hoa chiến thắng
+    if (currentState === GAME_STATE.FIREWORKS) {
+        if (fireworkParticles.length < 50) {
+            let colors = ['#fff200', '#ff00de', '#00f2ff'];
+            particles.push(new Particle(player.x, player.y, colors[Math.floor(Math.random() * 3)]));
+        }
+        ctx.fillStyle = '#fff200';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#fff200';
+        ctx.fillText("XUẤT SẮC!", canvas.width / 2, canvas.height / 2);
+        ctx.shadowBlur = 0;
+    }
+
+    // Xử lý thua cuộc
+    if (currentState === GAME_STATE.GAMEOVER_FADEOUT) {
+        opacityOverlay += 0.02;
+        if (opacityOverlay >= 1) {
+            opacityOverlay = 1;
+            setTimeout(() => { currentState = GAME_STATE.GAMEOVER_FADEIN; }, 1000);
+        }
+        drawGameOver(opacityOverlay);
+    } else if (currentState === GAME_STATE.GAMEOVER_FADEIN) {
+        opacityOverlay -= 0.02;
+        if (opacityOverlay <= 0) {
+            opacityOverlay = 0;
+            resetGame();
+        } else {
+            drawGameOver(opacityOverlay);
+        }
+    }
+
+    // Vẽ hạt
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (particles[i].life <= 0) particles.splice(i, 1);
+    }
+
+    requestAnimationFrame(updateAndDraw);
+}
+
+function drawGameOver(alpha) {
+    ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.font = 'bold 45px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText("THUA!", canvas.width / 2, canvas.height / 2 - 20);
+    ctx.font = '20px Arial';
+    ctx.fillStyle = `rgba(0, 242, 255, ${alpha})`;
+    ctx.fillText("Cố lên nào!", canvas.width / 2, canvas.height / 2 + 30);
 }
 
 function resetGame() {
     player.hp = 3;
-    player.pos = new Vector2(width/2, height*0.8);
-    player.invul = 0;
-    asteroids = [];
-    particles = [];
-    fireworks = [];
-    startTime = Date.now();
-    isGameOver = false;
-    isWin = false;
-    fadeOut = 0;
+    player.x = canvas.width / 2;
+    player.y = canvas.height * 0.8;
+    progress = 0; elapsedTime = 0;
+    asteroids = []; hearts = []; particles = [];
+    heartsSpawned = 0;
+    lastTime = performance.now();
+    currentState = GAME_STATE.PLAYING;
 }
 
-// --- KHỞI TẠO HỆ THỐNG ---
-function init() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-    createUniverse();
-    
-    window.addEventListener('mousemove', e => {
-        player.target.x = e.clientX;
-        player.target.y = e.clientY;
-    });
+// Lắng nghe điều khiển
+window.addEventListener('mousemove', e => {
+    player.targetX = e.clientX;
+    player.targetY = e.clientY;
+});
+window.addEventListener('touchmove', e => {
+    e.preventDefault();
+    player.targetX = e.touches[0].clientX;
+    player.targetY = e.touches[0].clientY;
+}, { passive: false });
 
-    window.addEventListener('touchmove', e => {
-        e.preventDefault();
-        player.target.x = e.touches[0].clientX;
-        player.target.y = e.touches[0].clientY;
-    }, { passive: false });
+requestAnimationFrame(updateAndDraw);
 
-    render();
-}
-
-init();
-
-/**
- * GHI CHÚ CHO KRIS ARTURA:
- * 1. Lỗi trail chỉ hiện ở giữa đã được fix bằng cách vẽ trail dựa trên tọa độ tuyệt đối (x, y) 
- * của Player, không phụ thuộc vào translate của canvas cha.
- * 2. Số lượng thiên thạch được kiểm soát bằng SETTINGS.MAX_ASTEROIDS và cơ chế spawn ngẫu nhiên 
- * có giới hạn (0.03 xác suất mỗi frame).
- * 3. Ma sát (friction) 0.99 giúp thiên thạch Sin chuyển động lờ đờ, chân thực hơn.
- * 4. Toàn bộ logic Class-based giúp code dễ đọc và bảo trì.
- */
 </script>
 </body>
-    </html>
-    
+</html>
