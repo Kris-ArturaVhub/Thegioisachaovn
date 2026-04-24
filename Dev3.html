@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Star V4.4 - by Kris Artura</title>
+    <title>Vortex Star V4.5 - by Kris Artura</title>
     <style>
         body {
             margin: 0;
@@ -34,7 +34,7 @@
 </head>
 <body>
 
-<div id="author-tag">AUTHOR: KRIS ARTURA</div>
+<div id="author-tag">Sao bang game</div>
 <canvas id="gameCanvas"></canvas>
 
 <script>
@@ -546,21 +546,32 @@ function resetGameCore() {
 // 7. SỰ KIỆN ĐIỀU KHIỂN (Yêu cầu 2: Tọa độ y bị trừ đi 25px để ngón tay không che)
 // ============================================================================
 
-window.addEventListener('mousemove', (e) => {
+// ============================================================================
+// 7. SỰ KIỆN ĐIỀU KHIỂN (FIX TRIỆT ĐỂ ĐỘ LỆCH)
+// ============================================================================
+
+function updateTargetPosition(clientX, clientY) {
     if (currentState === GAME_STATE.PLAYING) {
-        playerObj.targetX = e.clientX;
-        playerObj.targetY = e.clientY; // Tránh che khuất
+        // Lấy thông số vị trí thực tế của Canvas trên màn hình
+        const rect = canvas.getBoundingClientRect();
+        
+        // Tính toán tọa độ chính xác bên trong Canvas
+        playerObj.targetX = clientX - rect.left;
+        playerObj.targetY = clientY - rect.top;
     }
+}
+
+window.addEventListener('mousemove', (e) => {
+    updateTargetPosition(e.clientX, e.clientY);
 });
 
 window.addEventListener('touchmove', (e) => {
-    if (currentState === GAME_STATE.PLAYING) {
-        e.preventDefault();
-        playerObj.targetX = e.touches[0].clientX;
-        playerObj.targetY = e.touches[0].clientY; // Tránh tay che ngôi sao
+    e.preventDefault(); // Ngăn cuộn trang
+    if (e.touches.length > 0) {
+        updateTargetPosition(e.touches[0].clientX, e.touches[0].clientY);
     }
 }, { passive: false });
-
+        
 requestAnimationFrame(updateGame);
 
 </script>
