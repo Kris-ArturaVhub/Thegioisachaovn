@@ -1,586 +1,928 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Star V1</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #02000a;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* Vô hiệu hóa cuộn trang trên mobile */
-            user-select: none;
-        }
-        canvas {
-            display: block;
-            position: absolute; /* Khóa vị trí tuyệt đối */
-    top: 0;
-    left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        #author-tag {
-            position: absolute;
-            bottom: 15px;
-            right: 20px;
-            color: rgba(255, 242, 0, 0.4);
-            font-size: 12px;
-            letter-spacing: 3px;
-            pointer-events: none;
-            z-index: 100;
-            text-shadow: 0 0 10px rgba(255, 242, 0, 0.2);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vortex Star — VIP Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { overflow:hidden; background:#000; font-family:'Rajdhani',sans-serif; touch-action:none; user-select:none; cursor:none; }
+canvas { display:block; position:absolute; top:0; left:0; width:100%; height:100%; }
+
+/* ── HUD ── */
+#hud { position:absolute; top:0; left:0; width:100%; pointer-events:none; z-index:10; padding:18px 24px 0; }
+#progress-wrap { display:flex; align-items:center; gap:10px; margin-bottom:10px; justify-content:center; }
+.prog-lbl { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:3px; color:rgba(255,242,0,0.7); white-space:nowrap; }
+#progress-track { flex:1; max-width:520px; height:5px; background:rgba(255,255,255,0.06); border-radius:10px; overflow:visible; position:relative; }
+#progress-fill { height:100%; border-radius:10px; position:relative; background:linear-gradient(90deg,#fff200,#ffaa00); box-shadow:0 0 12px #fff200,0 0 24px rgba(255,242,0,0.4); transition:width 0.3s; }
+#progress-dot { position:absolute; right:-5px; top:50%; transform:translateY(-50%); width:11px; height:11px; border-radius:50%; background:#fff; box-shadow:0 0 10px #fff200; }
+#hp-row { display:flex; align-items:center; gap:6px; position:absolute; left:24px; top:52px; }
+.hp-heart { font-size:20px; line-height:1; color:#ff1a1a; filter:drop-shadow(0 0 6px #ff1a1a); transition:all 0.3s; }
+.hp-heart.empty { color:#444; filter:none; opacity:0.4; }
+#score-box { position:absolute; right:24px; top:48px; font-family:'Orbitron',monospace; font-size:11px; color:rgba(255,255,255,0.5); letter-spacing:2px; text-align:right; }
+#score-box span { color:#fff200; font-size:16px; font-weight:700; }
+#combo { position:absolute; right:24px; top:90px; font-family:'Orbitron',monospace; font-size:28px; font-weight:900; color:#fff200; letter-spacing:2px; text-shadow:0 0 20px #fff200; opacity:0; transition:opacity 0.3s; }
+
+/* ── ENERGY BAR (vertical, left side) ── */
+#energy-panel {
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    pointer-events:none; z-index:15;
+}
+#energy-label {
+    font-family:'Orbitron',monospace; font-size:8px; letter-spacing:2px;
+    color:rgba(255,255,255,0.35); writing-mode:vertical-lr;
+    text-orientation:mixed; transform:rotate(180deg);
+    transition:color 0.2s;
+}
+#energy-label.boost-active { color:#fff200; text-shadow:0 0 8px #fff200; }
+#energy-track {
+    width:10px; height:200px;
+    background:rgba(255,255,255,0.06);
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.08);
+    position:relative; overflow:hidden;
+}
+#energy-fill {
+    position:absolute; bottom:0; left:0; right:0;
+    border-radius:8px;
+    background: linear-gradient(0deg,
+        #ff0080 0%, #ff4400 20%, #ffaa00 40%,
+        #00ff88 60%, #00ccff 80%, #aa44ff 100%);
+    transition:height 0.08s linear;
+    box-shadow:0 0 10px rgba(100,200,255,0.5);
+}
+#energy-fill.boost-active { animation:energyPulse 0.35s infinite alternate; }
+#energy-fill.low { background:linear-gradient(0deg,#ff2200,#ff6600); box-shadow:0 0 12px rgba(255,50,0,0.8); }
+#energy-count {
+    font-family:'Orbitron',monospace; font-size:10px; font-weight:700;
+    color:rgba(255,255,255,0.6); letter-spacing:1px;
+}
+#energy-count.boost-active { color:#fff200; }
+@keyframes energyPulse {
+    from { box-shadow:0 0 8px rgba(100,200,255,0.5); }
+    to   { box-shadow:0 0 20px rgba(200,100,255,0.9),0 0 40px rgba(0,200,255,0.5); }
+}
+
+/* ── GAME OVER ── */
+#gameover-screen { position:absolute; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; background:radial-gradient(ellipse at center,rgba(20,0,0,0.95),rgba(0,0,0,0.98)); transition:opacity 0.6s; }
+#gameover-screen.visible { opacity:1; pointer-events:all; }
+#gameover-title { font-family:'Orbitron',monospace; font-size:clamp(36px,8vw,72px); font-weight:900; color:#ff2244; text-shadow:0 0 30px #ff2244,0 0 60px rgba(255,34,68,0.5); letter-spacing:4px; margin-bottom:12px; animation:glitch 2s infinite; }
+#gameover-sub { font-family:'Rajdhani',sans-serif; font-size:clamp(14px,3vw,22px); color:rgba(255,255,255,0.6); letter-spacing:6px; }
+
+/* ── WIN SCREEN ── */
+#win-screen { position:absolute; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; background:radial-gradient(ellipse at center,rgba(0,10,30,0.93),rgba(0,0,0,0.97)); transition:opacity 1s; }
+#win-screen.visible { opacity:1; pointer-events:all; }
+#win-title { font-family:'Orbitron',monospace; font-size:clamp(32px,7vw,64px); font-weight:900; letter-spacing:6px; margin-bottom:14px; background:linear-gradient(135deg,#fff200,#ff9900,#fff200); -webkit-background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 20px #fff200); animation:shimmer 2s infinite; }
+#win-sub { font-family:'Rajdhani',sans-serif; font-size:clamp(13px,2.5vw,20px); color:rgba(255,255,255,0.5); letter-spacing:8px; }
+
+/* ── TUTORIAL SCREEN ── */
+#tutorial-screen {
+    position:absolute; inset:0; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse at 50% 40%, rgba(10,0,30,0.97), rgba(0,0,0,0.99));
+    padding:20px;
+}
+#tutorial-screen.hidden { display:none; }
+#tut-title {
+    font-family:'Orbitron',monospace; font-size:clamp(20px,5vw,42px); font-weight:900;
+    letter-spacing:6px; margin-bottom:6px;
+    background:linear-gradient(135deg,#fff200,#aa44ff,#00ccff);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,242,0,0.6));
+}
+#tut-sub { font-family:'Rajdhani',sans-serif; font-size:clamp(11px,2vw,15px); color:rgba(255,255,255,0.35); letter-spacing:5px; margin-bottom:32px; }
+.tut-grid {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:14px 28px; max-width:600px; width:100%; margin-bottom:32px;
+}
+.tut-card {
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    border-radius:10px; padding:14px 16px;
+    display:flex; gap:12px; align-items:flex-start;
+}
+.tut-icon { font-size:22px; line-height:1; flex-shrink:0; margin-top:2px; }
+.tut-text h4 { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; color:rgba(255,242,0,0.8); margin-bottom:5px; }
+.tut-text p  { font-family:'Rajdhani',sans-serif; font-size:13px; color:rgba(255,255,255,0.55); line-height:1.5; }
+.tut-text b  { color:rgba(255,255,255,0.85); }
+.tut-divider { grid-column:1/-1; border:none; border-top:1px solid rgba(255,255,255,0.06); margin:2px 0; }
+#btn-start {
+    font-family:'Orbitron',monospace; font-size:14px; font-weight:700; letter-spacing:5px;
+    color:#000; border:none; border-radius:6px; cursor:pointer;
+    padding:16px 56px;
+    background:linear-gradient(135deg,#fff200,#ffaa00);
+    box-shadow:0 0 30px rgba(255,242,0,0.5),0 0 60px rgba(255,200,0,0.2);
+    transition:transform 0.15s,box-shadow 0.15s;
+}
+#btn-start:hover { transform:scale(1.07); box-shadow:0 0 40px rgba(255,242,0,0.8),0 0 80px rgba(255,200,0,0.4); }
+#btn-start:active { transform:scale(0.96); }
+
+/* ── REPLAY BUTTON ── */
+.replay-btn { margin-top:32px; padding:14px 40px; font-family:'Orbitron',monospace; font-size:13px; font-weight:700; letter-spacing:4px; color:#000; background:linear-gradient(135deg,#fff200,#ffaa00); border:none; border-radius:4px; cursor:pointer; box-shadow:0 0 20px rgba(255,242,0,0.5),0 0 40px rgba(255,200,0,0.2); transition:transform 0.15s,box-shadow 0.15s; pointer-events:all; }
+.replay-btn:hover { transform:scale(1.06); box-shadow:0 0 30px rgba(255,242,0,0.8),0 0 60px rgba(255,200,0,0.4); }
+.replay-btn:active { transform:scale(0.97); }
+#gameover-screen .replay-btn { background:linear-gradient(135deg,#ff2244,#ff6644); box-shadow:0 0 20px rgba(255,34,68,0.5),0 0 40px rgba(255,80,50,0.2); color:#fff; }
+
+/* ── AUTHOR ── */
+#author-tag { position:absolute; bottom:14px; right:20px; font-family:'Orbitron',monospace; font-size:9px; color:rgba(255,242,0,0.2); letter-spacing:4px; pointer-events:none; z-index:5; }
+
+/* ── CURSOR ── */
+#cursor { position:fixed; pointer-events:none; z-index:999; width:24px; height:24px; margin:-12px 0 0 -12px; }
+
+/* ── TOGGLE BUTTON ── */
+#btn-toggle-ctrl { position:absolute; top:80px; right:20px; font-family:'Orbitron',monospace; font-size:8px; letter-spacing:2px; color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:5px 8px; cursor:pointer; z-index:30; transition:all 0.2s; }
+#btn-toggle-ctrl:hover { color:rgba(255,242,0,0.7); border-color:rgba(255,242,0,0.3); }
+
+/* ── GAMEPAD ── */
+#gamepad { position:absolute; bottom:0; left:0; right:0; height:220px; pointer-events:none; z-index:20; display:none; }
+#gamepad.visible { display:block; }
+
+/* Joystick */
+#joystick-zone { position:absolute; left:30px; bottom:30px; width:140px; height:140px; pointer-events:all; }
+
+/* 4 arc segments like a scope */
+#joystick-base {
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 50%,
+        rgba(30,100,200,0.12) 0%,
+        rgba(20,60,160,0.07) 50%,
+        rgba(0,0,0,0) 100%);
+}
+/* The 4 curved arcs drawn via SVG overlay */
+#joy-svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+
+/* Center diamond knob */
+#joystick-knob {
+    position:absolute; width:44px; height:44px;
+    top:50%; left:50%; transform:translate(-50%,-50%) rotate(45deg);
+    background:linear-gradient(135deg,
+        rgba(180,230,255,0.95) 0%,
+        rgba(60,150,255,0.85) 40%,
+        rgba(20,60,200,0.92) 100%);
+    border-radius:6px;
+    box-shadow:0 0 18px rgba(80,180,255,0.9),0 0 36px rgba(40,120,255,0.4),
+               inset 0 2px 4px rgba(255,255,255,0.35);
+    transition:box-shadow 0.1s;
+}
+#joystick-knob::after {
+    content:''; position:absolute; inset:6px; border-radius:3px;
+    background:radial-gradient(circle at 38% 32%,rgba(255,255,255,0.5),transparent);
+}
+#joystick-knob.active {
+    box-shadow:0 0 28px rgba(80,220,255,1),0 0 56px rgba(40,160,255,0.6),
+               inset 0 2px 5px rgba(255,255,255,0.5);
+}
+
+/* Right buttons */
+#right-buttons { position:absolute; right:30px; bottom:30px; display:flex; flex-direction:column; align-items:flex-end; gap:14px; pointer-events:all; }
+.action-btn { border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'Orbitron',monospace; font-weight:700; transition:transform 0.08s,box-shadow 0.08s; -webkit-tap-highlight-color:transparent; }
+.action-btn:active { transform:scale(0.88); }
+
+#btn-fire {
+    width:74px; height:74px; font-size:24px;
+    background:radial-gradient(circle at 38% 32%,
+        rgba(255,200,80,0.95) 0%, rgba(255,80,0,0.9) 50%, rgba(180,20,0,0.95) 100%);
+    box-shadow:0 0 18px rgba(255,120,0,0.8),0 0 40px rgba(255,60,0,0.35),
+               inset 0 2px 4px rgba(255,200,100,0.3);
+    color:#fff; position:relative;
+}
+#btn-fire::after { content:'FIRE'; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:7px; letter-spacing:2px; opacity:0.7; }
+#btn-fire.shooting { box-shadow:0 0 30px rgba(255,220,0,1),0 0 60px rgba(255,100,0,0.7),inset 0 2px 4px rgba(255,230,100,0.5); }
+
+#btn-boost {
+    width:58px; height:58px; font-size:9px; letter-spacing:1.5px;
+    background:radial-gradient(circle at 38% 32%,
+        rgba(200,120,255,0.95) 0%, rgba(100,40,220,0.9) 50%, rgba(40,0,150,0.95) 100%);
+    box-shadow:0 0 14px rgba(150,80,255,0.7),0 0 30px rgba(100,40,220,0.3),
+               inset 0 2px 4px rgba(200,150,255,0.3);
+    color:#fff;
+}
+#btn-boost.boosting { box-shadow:0 0 24px rgba(200,100,255,1),0 0 50px rgba(150,60,255,0.7); animation:boostBtnPulse 0.3s infinite alternate; }
+@keyframes boostBtnPulse { from{transform:scale(1)} to{transform:scale(1.07)} }
+
+@keyframes glitch {
+    0%,100% { text-shadow:0 0 30px #ff2244,0 0 60px rgba(255,34,68,.5); }
+    20% { text-shadow:-2px 0 #ff2244,2px 0 #ff88aa,0 0 60px rgba(255,34,68,.5); }
+    40% { text-shadow:2px 0 #ff2244,-2px 0 #ff88aa,0 0 60px rgba(255,34,68,.5); }
+}
+@keyframes shimmer {
+    0%,100% { filter:drop-shadow(0 0 20px #fff200); }
+    50% { filter:drop-shadow(0 0 40px #ffaa00) drop-shadow(0 0 80px rgba(255,200,0,.4)); }
+}
+@keyframes pulse-hp { 0%{transform:scale(1.4)} 100%{transform:scale(1)} }
+</style>
 </head>
 <body>
 
-<div id="author-tag">Sao bang game</div>
+<!-- TUTORIAL SCREEN (shown once) -->
+<div id="tutorial-screen">
+    <div id="tut-title">VORTEX STAR</div>
+    <div id="tut-sub">HƯỚNG DẪN CHƠI</div>
+    <div class="tut-grid">
+        <div class="tut-card">
+            <div class="tut-icon">🖱️</div>
+            <div class="tut-text">
+                <h4>DI CHUYỂN</h4>
+                <p><b>PC:</b> Di chuột để điều khiển ngôi sao<br><b>Mobile:</b> Chạm & kéo hoặc dùng Joystick</p>
+            </div>
+        </div>
+        <div class="tut-card">
+            <div class="tut-icon">⚡</div>
+            <div class="tut-text">
+                <h4>NĂNG LƯỢNG</h4>
+                <p>Thanh bên <b>trái</b>. Rainbow mode tiêu <b>1 NL/s</b>, bắn đạn tốn <b>5 NL/viên</b>. Tối đa 30 NL.</p>
+            </div>
+        </div>
+        <div class="tut-card">
+            <div class="tut-icon">🌈</div>
+            <div class="tut-text">
+                <h4>RAINBOW BOOST</h4>
+                <p><b>PC:</b> Giữ <b>Space / Shift</b><br><b>Mobile:</b> Nút <b>BOOST</b> hoặc 2 ngón tay<br>→ Bất tử + tua x2</p>
+            </div>
+        </div>
+        <div class="tut-card">
+            <div class="tut-icon">★</div>
+            <div class="tut-text">
+                <h4>BẮN ĐẠN</h4>
+                <p><b>PC:</b> Nhấn <b>Z / J</b><br><b>Mobile:</b> Nút <b>FIRE</b><br>→ 3 viên đạn, phá thiên thạch, +20đ</p>
+            </div>
+        </div>
+        <hr class="tut-divider">
+        <div class="tut-card">
+            <div class="tut-icon">❤️</div>
+            <div class="tut-text">
+                <h4>MÁU</h4>
+                <p>Có <b>5 HP</b>. Thu thập <b>trái tim</b> để hồi máu. Tránh thiên thạch!</p>
+            </div>
+        </div>
+        <div class="tut-card">
+            <div class="tut-icon">🎯</div>
+            <div class="tut-text">
+                <h4>MỤC TIÊU</h4>
+                <p>Sống sót <b>2 phút</b> để đến đích. Giai đoạn sau thiên thạch <b>mưa sao băng</b> chéo!</p>
+            </div>
+        </div>
+    </div>
+    <button id="btn-start">▶ BẮT ĐẦU</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+    <div id="progress-wrap">
+        <div class="prog-lbl">VOYAGE</div>
+        <div id="progress-track">
+            <div id="progress-fill" style="width:0%"><div id="progress-dot"></div></div>
+        </div>
+        <div class="prog-lbl" style="min-width:36px;text-align:right" id="pct-lbl">0%</div>
+    </div>
+    <div id="hp-row">
+        <div class="hp-heart" id="h1">♥</div>
+        <div class="hp-heart" id="h2">♥</div>
+        <div class="hp-heart" id="h3">♥</div>
+        <div class="hp-heart" id="h4">♥</div>
+        <div class="hp-heart" id="h5">♥</div>
+    </div>
+    <div id="score-box">SCORE<br><span id="score-val">0</span></div>
+</div>
+<div id="combo">×1</div>
+
+<!-- Energy bar (vertical, left) -->
+<div id="energy-panel">
+    <div id="energy-label">ENERGY</div>
+    <div id="energy-track"><div id="energy-fill" style="height:0%"></div></div>
+    <div id="energy-count">0</div>
+</div>
+
+<!-- Game Over -->
+<div id="gameover-screen">
+    <div id="gameover-title">GAME OVER</div>
+    <div id="gameover-sub">ĐỪNG BỎ CUỘC ...</div>
+    <button class="replay-btn" id="btn-replay-go">↺ CHƠI LẠI</button>
+</div>
+
+<!-- Win -->
+<div id="win-screen">
+    <div id="win-title">XUẤT SẮC!</div>
+    <div id="win-sub">HÀNH TRÌNH HOÀN TẤT</div>
+    <button class="replay-btn" id="btn-replay-win">↺ CHƠI LẠI</button>
+</div>
+
+<!-- Toggle pad mode -->
+<button id="btn-toggle-ctrl">🕹 PAD</button>
+
+<!-- Gamepad -->
+<div id="gamepad">
+    <div id="joystick-zone">
+        <div id="joystick-base">
+            <!-- Scope arcs SVG -->
+            <svg id="joy-svg" viewBox="0 0 140 140">
+                <!-- 4 curved arcs separated by gaps, like a sniper scope -->
+                <path d="M70,8 A62,62 0 0,1 132,70" fill="none" stroke="rgba(80,180,255,0.35)" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M132,70 A62,62 0 0,1 70,132" fill="none" stroke="rgba(80,180,255,0.35)" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M70,132 A62,62 0 0,1 8,70" fill="none" stroke="rgba(80,180,255,0.35)" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M8,70 A62,62 0 0,1 70,8" fill="none" stroke="rgba(80,180,255,0.35)" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- crosshair lines (short, towards center) -->
+                <line x1="70" y1="8" x2="70" y2="22" stroke="rgba(120,220,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="70" y1="118" x2="70" y2="132" stroke="rgba(120,220,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="8" y1="70" x2="22" y2="70" stroke="rgba(120,220,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="118" y1="70" x2="132" y2="70" stroke="rgba(120,220,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- inner ring -->
+                <circle cx="70" cy="70" r="28" fill="none" stroke="rgba(100,200,255,0.1)" stroke-width="1" stroke-dasharray="4 4"/>
+                <!-- center dot -->
+                <circle cx="70" cy="70" r="3" fill="rgba(120,200,255,0.25)"/>
+            </svg>
+        </div>
+        <div id="joystick-knob"></div>
+    </div>
+    <div id="right-buttons">
+        <button class="action-btn" id="btn-fire">★</button>
+        <button class="action-btn" id="btn-boost">BOOST</button>
+    </div>
+</div>
+
+<canvas id="cursor" width="24" height="24"></canvas>
 <canvas id="gameCanvas"></canvas>
+<div id="author-tag">VORTEX STAR — VIP</div>
 
 <script>
-/**
- * VORTEX STAR ENGINE V4.4 - THE PERFECT CORE
- * Author: Kris Artura
- * Description: Optimized Game Over states, diverse asteroid paths, touch offset, and yellow core design.
- * Strict detailed logic implementation maintained.
- */
-
+// ══════════════════════════════════════════════════════════════════════════════
+// VORTEX STAR — V5
+// ══════════════════════════════════════════════════════════════════════════════
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const ctx    = canvas.getContext('2d');
+const cursorCanvas = document.getElementById('cursor');
+const cctx = cursorCanvas.getContext('2d');
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
+function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+window.addEventListener('resize',()=>{ resizeCanvas(); initEnvironment(); });
 resizeCanvas();
 
-// ============================================================================
-// 1. CẤU HÌNH HỆ THỐNG (GAME CONFIG)
-// ============================================================================
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const progressFill  = document.getElementById('progress-fill');
+const gameoverScreen= document.getElementById('gameover-screen');
+const winScreen     = document.getElementById('win-screen');
+const tutScreen     = document.getElementById('tutorial-screen');
+const comboEl       = document.getElementById('combo');
+const scoreVal      = document.getElementById('score-val');
+const hpHearts      = [1,2,3,4,5].map(i=>document.getElementById('h'+i));
+const pctLbl        = document.getElementById('pct-lbl');
+const energyFill    = document.getElementById('energy-fill');
+const energyLabel   = document.getElementById('energy-label');
+const energyCount   = document.getElementById('energy-count');
 
-const GAME_STATE = {
-    PLAYING: 0,
-    GAMEOVER_FADEOUT: 1, // Màn hình tối dần
-    GAMEOVER_HOLD: 2,    // Giữ màn đen 2 giây
-    GAMEOVER_FADEIN: 3,  // Sáng dần lại để chơi tiếp
-    AUTOPILOT: 4,
-    FIREWORKS: 5
-};
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const STATE = {PLAYING:0,GAMEOVER_FADEOUT:1,GAMEOVER_HOLD:2,GAMEOVER_FADEIN:3,AUTOPILOT:4,FIREWORKS:5};
+let currentState = STATE.PLAYING;
+let opacityOverlay=0, gameOverHoldTimer=0;
+let gameStarted = false; // tutorial gate
 
-let currentState = GAME_STATE.PLAYING;
-let opacityOverlay = 0;
-let gameOverHoldTimer = 0;
-
-const GAME_DURATION = 80000;
+const GAME_DURATION    = 120000;
 const DESTINATION_TIME = GAME_DURATION - 5000;
-let elapsedTime = 0;
-let lastTime = performance.now();
-let progress = 0;
-let difficultyMultiplier = 1.0;
-let destinationAlpha = 0;
+let elapsedTime=0, lastTime=performance.now();
+let progress=0, difficultyMultiplier=1.0;
+let destinationAlpha=0;
+let score=0, combo=0, comboTimer=0, comboVisible=false;
 
-const MAX_HEARTS_SPAWN = 7;
-let heartsSpawned = 0;
-let lastHeartSpawnTime = -10000;
+// ── ENERGY (unified bar) ──────────────────────────────────────────────────────
+const ENERGY_MAX        = 30;
+const ENERGY_REGEN      = 2.5;    // per second when idle
+const BOOST_DRAIN_E     = 1.0;    // per second during rainbow mode
+const BULLET_COST       = 5;      // per shot
+const BOOST_MIN_E       = 5;      // min energy to activate boost
+let energy      = 0;
+let isBoosting  = false;
+let boostKeyHeld= false;
 
-let asteroids = [];
-let hearts = [];
-let particles = [];
-let backgroundStars = [];
-let destinationStars = []; // Ngôi sao khu vực đích
+// ── SPAWN ─────────────────────────────────────────────────────────────────────
+const MAX_HEARTS_SPAWN=7;
+let heartsSpawned=0, lastHeartSpawnTime=-10000;
+let asteroids=[], hearts=[], particles=[], backgroundStars=[], destinationStars=[];
+let shockwaves=[], floatingTexts=[], bullets=[];
+let screenShake={x:0,y:0,intensity:0};
 
-// ============================================================================
-// 2. KHỞI TẠO LỚP ĐỐI TƯỢNG (CLASSES)
-// ============================================================================
+// ── INPUT ─────────────────────────────────────────────────────────────────────
+let mouseX=canvas.width/2, mouseY=canvas.height/2;
+let touchActive=false;
 
-// --- LỚP NGƯỜI CHƠI (PLAYER) ---
-class Player {
-    constructor() {
-        this.x = canvas.width / 2;
-        this.y = canvas.height * 0.8;
-        this.targetX = canvas.width / 2;
-        this.targetY = canvas.height * 0.8;
-        this.size = 20;
-        this.angle = 0;
-        this.hp = 5;
-        this.maxHp = 5;
-        this.invulnerable = false;
-        this.invulTimer = 0;
-        this.trail = [];
-        this.maxTrailLength = 25;
-        this.baseEasing = 0.15; // Phản hồi mượt mà với ngón tay
+window.addEventListener('mousemove',e=>{
+    mouseX=e.clientX; mouseY=e.clientY;
+    cursorCanvas.style.left=(e.clientX-12)+'px';
+    cursorCanvas.style.top=(e.clientY-12)+'px';
+});
+canvas.addEventListener('touchstart',e=>{ e.preventDefault(); touchActive=true; updateTouch(e); },{passive:false});
+canvas.addEventListener('touchmove', e=>{ e.preventDefault(); updateTouch(e); },{passive:false});
+canvas.addEventListener('touchend',  e=>{ if(e.touches.length===0) touchActive=false; },{passive:false});
+function updateTouch(e){ let t=e.touches[0]; mouseX=t.clientX; mouseY=t.clientY; }
+
+const keys={};
+window.addEventListener('keydown',e=>{
+    keys[e.code]=true;
+    if(e.code==='KeyZ'||e.code==='KeyJ') fireBtnHeld=true;
+    if(e.code==='Space'||e.code==='ShiftLeft'){ e.preventDefault(); boostKeyHeld=true; }
+});
+window.addEventListener('keyup',e=>{
+    keys[e.code]=false;
+    if(e.code==='KeyZ'||e.code==='KeyJ') fireBtnHeld=false;
+    if(e.code==='Space'||e.code==='ShiftLeft') boostKeyHeld=false;
+});
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function clamp(v,mn,mx){ return Math.max(mn,Math.min(mx,v)); }
+
+function drawStarShape(ctx,x,y,r,points,m,angle,color,glow=true){
+    ctx.save(); ctx.translate(x,y); ctx.rotate(angle);
+    ctx.beginPath(); ctx.moveTo(0,-r);
+    for(let i=0;i<points;i++){
+        ctx.rotate(Math.PI/points); ctx.lineTo(0,-(r*m));
+        ctx.rotate(Math.PI/points); ctx.lineTo(0,-r);
     }
-
-    update(dt) {
-        this.x += (this.targetX - this.x) * this.baseEasing;
-        this.y += (this.targetY - this.y) * this.baseEasing;
-        this.angle += 0.03;
-
-        if (this.invulnerable) {
-            this.invulTimer -= dt;
-            if (this.invulTimer <= 0) this.invulnerable = false;
-        }
-
-        if (currentState === GAME_STATE.PLAYING || currentState === GAME_STATE.AUTOPILOT) {
-            this.trail.push({ x: this.x, y: this.y, angle: this.angle });
-            if (this.trail.length > this.maxTrailLength) this.trail.shift();
-        }
-    }
-
-    draw(ctx) {
-        // Vẽ dải sáng màu vàng/cầu vồng
-        for (let i = 0; i < this.trail.length; i++) {
-            let t = this.trail[i];
-            let ratio = i / this.trail.length;
-            ctx.globalAlpha = ratio * 0.6;
-            let trailSize = this.size * ratio;
-            
-            // Yêu cầu 1: Màu vàng mặc định, cầu vồng lúc Win
-            let color = (progress > 0.95) ? `hsl(${(Date.now() / 10 + i * 5) % 360}, 100%, 60%)` : "#fff200";
-            drawStarShape(ctx, t.x, t.y, trailSize, 5, 0.4, t.angle, color);
-        }
-        ctx.globalAlpha = 1.0;
-
-        if (this.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
-            ctx.globalAlpha = 0.3;
-        }
-
-        let mainColor = (progress > 0.95) ? `hsl(${(Date.now() / 5) % 360}, 100%, 60%)` : "#fff200";
-        drawStarShape(ctx, this.x, this.y, this.size, 5, 0.4, this.angle, mainColor);
-        ctx.globalAlpha = 1.0;
-    }
+    ctx.fillStyle=color;
+    if(glow){ ctx.shadowBlur=20; ctx.shadowColor=color; }
+    ctx.fill(); ctx.restore();
 }
 
-// --- LỚP THIÊN THẠCH (ASTEROID) ---
-class Asteroid {
-    constructor() {
-        this.r = Math.random() * 15 + 10;
-        this.y = -50;
-        
-        // Yêu cầu 3: Đa dạng hướng vs Mưa sao băng Hardcore
-        this.isHardcore = progress > 0.7;
-        
-        if (this.isHardcore) {
-            // Hardcore: Quỹ đạo mưa sao băng chéo, nhanh hơn
-            this.x = Math.random() * (canvas.width * 1.5);
-            let baseSpeed = Math.random() * 3.5 + 5;
-            this.vy = baseSpeed * difficultyMultiplier;
-            this.vx = -this.vy * 0.4; 
-            this.isSin = false;
-        } else {
-            // Normal: Rơi thẳng, bay xiên, hoặc lượn sóng đa dạng
-            this.x = Math.random() * (canvas.width - this.r * 2) + this.r;
-            let baseSpeed = Math.random() * 2.1 + 2.5;
-            this.vy = baseSpeed * difficultyMultiplier;
-            
-            let moveType = Math.random();
-            if (moveType < 0.3) {
-                this.vx = (Math.random() - 0.5) * 2.5; // Bay xiên ngẫu nhiên
-                this.isSin = false;
-            } else if (moveType < 0.6) {
-                this.vx = 0; // Rơi thẳng
-                this.isSin = true;
-                this.sinOffset = Math.random() * Math.PI * 2;
-                this.baseX = this.x;
-            } else {
-                this.vx = (Math.random() - 0.5); 
-                this.isSin = false;
-            }
-        }
-
-        this.trail = [];
-        this.maxTrailLength = 15;
-        this.color = this.isHardcore ? '#ff3300' : '#ffa500';
-    }
-
-    update(dt) {
-        this.y += this.vy;
-        
-        if (this.isSin && !this.isHardcore) {
-            this.x = this.baseX + Math.sin(this.y * 0.005 + this.sinOffset) * 47;
-        } else {
-            this.x += this.vx;
-        }
-
-        this.trail.push({ x: this.x, y: this.y });
-        if (this.trail.length > this.maxTrailLength) this.trail.shift();
-    }
-
-    draw(ctx) {
-        ctx.beginPath();
-        if (this.trail.length > 0) {
-            ctx.moveTo(this.trail[0].x, this.trail[0].y);
-            for (let i = 1; i < this.trail.length; i++) {
-                ctx.lineTo(this.trail[i].x, this.trail[i].y);
-            }
-            let grad = ctx.createLinearGradient(this.trail[0].x, this.trail[0].y, this.x, this.y);
-            grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(1, this.color);
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = this.r * 1.2;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-        }
-
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r * 0.6, 0, Math.PI * 2);
-        ctx.fillStyle = "#fff";
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = this.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    }
+function drawHeartShapeCtx(ctx,x,y,size,color){
+    ctx.beginPath(); ctx.moveTo(x,y+size*0.3);
+    ctx.bezierCurveTo(x,y,x-size,y,x-size,y+size*0.4);
+    ctx.bezierCurveTo(x-size,y+size*0.8,x,y+size*1.3,x,y+size*1.5);
+    ctx.bezierCurveTo(x,y+size*1.3,x+size,y+size*0.8,x+size,y+size*0.4);
+    ctx.bezierCurveTo(x+size,y,x,y,x,y+size*0.3);
+    ctx.fillStyle=color; ctx.shadowBlur=14; ctx.shadowColor=color; ctx.fill(); ctx.shadowBlur=0;
 }
 
-// --- LỚP TRÁI TIM VÀ HẠT (HEART & PARTICLES) ---
-class Heart {
-    constructor() {
-        this.r = 16;
-        this.x = Math.random() * (canvas.width - this.r * 4) + this.r * 2;
-        this.y = -50;
-        this.vy = 2.5;
-        this.pulse = 0;
-    }
-    update(dt) { this.y += this.vy; this.pulse += 0.1; }
-    draw(ctx) {
-        let scale = 1 + Math.sin(this.pulse) * 0.15;
-        ctx.save(); ctx.translate(this.x, this.y); ctx.scale(scale, scale);
-        drawHeartShape(ctx, 0, 0, 10, '#ff1a1a');
-        ctx.restore();
-    }
+function triggerShake(intensity){ screenShake.intensity=Math.max(screenShake.intensity,intensity); }
+function updateShake(){
+    if(screenShake.intensity>0.2){ screenShake.x=(Math.random()-0.5)*screenShake.intensity; screenShake.y=(Math.random()-0.5)*screenShake.intensity; screenShake.intensity*=0.82; }
+    else { screenShake.x=0; screenShake.y=0; screenShake.intensity=0; }
+}
+
+// ── CLASSES ───────────────────────────────────────────────────────────────────
+class Shockwave {
+    constructor(x,y,color='rgba(255,242,0,'){ this.x=x; this.y=y; this.r=0; this.alpha=0.8; this.color=color; }
+    update(){ this.r+=5; this.alpha-=0.04; }
+    draw(ctx){ if(this.alpha<=0)return; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.strokeStyle=this.color+this.alpha+')'; ctx.lineWidth=2.5; ctx.stroke(); }
+    get dead(){ return this.alpha<=0; }
+}
+
+class FloatText {
+    constructor(x,y,text,color='#fff200'){ this.x=x; this.y=y; this.text=text; this.color=color; this.vy=-2; this.alpha=1; }
+    update(){ this.y+=this.vy; this.vy*=0.96; this.alpha-=0.018; }
+    draw(ctx){ if(this.alpha<=0)return; ctx.save(); ctx.globalAlpha=this.alpha; ctx.font="bold 20px 'Orbitron',monospace"; ctx.fillStyle=this.color; ctx.textAlign='center'; ctx.shadowBlur=12; ctx.shadowColor=this.color; ctx.fillText(this.text,this.x,this.y); ctx.restore(); }
+    get dead(){ return this.alpha<=0; }
 }
 
 class Particle {
-    constructor(x, y, color) {
-        this.x = x; this.y = y; this.color = color;
-        this.size = Math.random() * 3 + 1.5;
-        let angle = Math.random() * Math.PI * 2;
-        let speed = Math.random() * 8 + 2;
-        this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
-        this.life = 1.0; this.decay = 0.01 + Math.random() * 0.02;
-        this.gravity = 0.1; this.friction = 0.96;
+    constructor(x,y,color){ this.x=x; this.y=y; this.color=color; this.size=Math.random()*3+1.5; let a=Math.random()*Math.PI*2,sp=Math.random()*9+2; this.vx=Math.cos(a)*sp; this.vy=Math.sin(a)*sp; this.life=1; this.decay=0.01+Math.random()*0.02; this.friction=0.95; }
+    update(){ this.vx*=this.friction; this.vy*=this.friction; this.vy+=0.12; this.x+=this.vx; this.y+=this.vy; this.life-=this.decay; }
+    draw(ctx){ if(this.life<=0)return; ctx.globalAlpha=this.life; ctx.fillStyle=this.color; ctx.shadowBlur=6; ctx.shadowColor=this.color; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; ctx.globalAlpha=1; }
+}
+
+class Bullet {
+    constructor(x,y,vx,vy,isHardcore=false){
+        this.x=x; this.y=y; this.vx=vx; this.vy=vy;
+        this.r=7; this.life=1;
+        this.trail=[];
+        this.hue=isBoosting?(Date.now()/8)%360:45;
+        this.isHardcore=isHardcore;
     }
-    update(dt) {
-        this.vx *= this.friction; this.vy *= this.friction; this.vy += this.gravity;
-        this.x += this.vx; this.y += this.vy; this.life -= this.decay;
+    update(speedMul){
+        this.trail.push({x:this.x,y:this.y});
+        if(this.trail.length>10) this.trail.shift();
+        this.x+=this.vx*speedMul; this.y+=this.vy*speedMul;
+        if(this.y<-30||this.x<-30||this.x>canvas.width+30||this.y>canvas.height+30) this.life=0;
     }
-    draw(ctx) {
-        if (this.life <= 0) return;
-        ctx.globalAlpha = this.life; ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1.0;
+    draw(ctx){
+        for(let i=0;i<this.trail.length;i++){
+            let t=this.trail[i], ratio=i/this.trail.length;
+            ctx.globalAlpha=ratio*0.45;
+            ctx.fillStyle=`hsl(${this.hue},100%,68%)`;
+            ctx.beginPath(); ctx.arc(t.x,t.y,this.r*ratio*0.8,0,Math.PI*2); ctx.fill();
+        }
+        ctx.globalAlpha=1;
+        ctx.shadowBlur=16; ctx.shadowColor=`hsl(${this.hue},100%,65%)`;
+        drawStarShape(ctx,this.x,this.y,this.r,4,0.38,(Date.now()/70)%360,`hsl(${this.hue},100%,78%)`);
+        ctx.shadowBlur=0;
+    }
+    get dead(){ return this.life<=0; }
+}
+
+class Player {
+    constructor(){
+        this.x=canvas.width/2; this.y=canvas.height*0.8;
+        this.targetX=canvas.width/2; this.targetY=canvas.height*0.8;
+        this.size=20; this.angle=0;
+        this.hp=5; this.maxHp=5;
+        this.invulnerable=false; this.invulTimer=0;
+        this.trail=[]; this.maxTrailLength=16;
+        this.baseEasing=0.14;
+        this.thrusterParticles=[];
+        this.aura=0;
+    }
+    update(dt){
+        let ex=this.baseEasing+(touchActive?0.02:0);
+        this.x+=(this.targetX-this.x)*ex;
+        this.y+=(this.targetY-this.y)*ex;
+        this.angle+=0.025;
+        this.aura=(Math.sin(Date.now()*0.003)+1)/2;
+        if(this.invulnerable){ this.invulTimer-=dt; if(this.invulTimer<=0) this.invulnerable=false; }
+        if(currentState===STATE.PLAYING||currentState===STATE.AUTOPILOT){
+            this.trail.push({x:this.x,y:this.y,angle:this.angle});
+            if(this.trail.length>this.maxTrailLength) this.trail.shift();
+        }
+        if(Math.random()<0.2){
+            this.thrusterParticles.push({x:this.x+(Math.random()-0.5)*6,y:this.y+this.size*0.8,vx:(Math.random()-0.5)*1.2,vy:Math.random()*2.5+1,life:1,size:Math.random()*2.5+0.8,color:isBoosting?`hsl(${Math.random()*360},100%,65%)`:'#ffaa00'});
+        }
+        if(this.thrusterParticles.length>20) this.thrusterParticles.length=20;
+        this.thrusterParticles=this.thrusterParticles.filter(p=>{ p.y+=p.vy; p.x+=p.vx; p.life-=0.07; return p.life>0; });
+    }
+    draw(ctx){
+        this.thrusterParticles.forEach(p=>{ ctx.globalAlpha=p.life*0.7; ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill(); });
+        for(let i=0;i<this.trail.length;i++){
+            let t=this.trail[i],ratio=i/this.trail.length;
+            ctx.globalAlpha=ratio*0.5;
+            let col=isBoosting?`hsl(${(Date.now()/6+i*8)%360},100%,65%)`:progress>0.95?`hsl(${(Date.now()/10+i*6)%360},100%,60%)`:'#fff200';
+            drawStarShape(ctx,t.x,t.y,this.size*ratio*0.9,5,0.4,t.angle,col,false);
+        }
+        ctx.globalAlpha=1;
+        if(!this.invulnerable||Math.floor(Date.now()/80)%2===0){
+            let auraR=this.size*1.8+this.aura*6+(isBoosting?8:0);
+            let auraCol=isBoosting?`hsla(${(Date.now()/4)%360},100%,60%,${0.3+this.aura*0.2})`:`rgba(255,242,0,${0.08+this.aura*0.1})`;
+            ctx.beginPath(); ctx.arc(this.x,this.y,auraR,0,Math.PI*2); ctx.strokeStyle=auraCol; ctx.lineWidth=isBoosting?2:1; ctx.stroke();
+            let cg=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.size*1.5);
+            cg.addColorStop(0,`rgba(255,255,180,${0.3+this.aura*0.2})`); cg.addColorStop(1,'rgba(0,0,0,0)');
+            ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(this.x,this.y,this.size*1.5,0,Math.PI*2); ctx.fill();
+        }
+        if(isBoosting){ for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(this.x,this.y,this.size*2.5+i*4,0,Math.PI*2); ctx.strokeStyle=`hsla(${(Date.now()/3+i*120)%360},100%,65%,${0.5-i*0.1})`; ctx.lineWidth=2; ctx.stroke(); } }
+        if(this.invulnerable&&!isBoosting&&Math.floor(Date.now()/90)%2===0) ctx.globalAlpha=0.25;
+        let mc=isBoosting?`hsl(${(Date.now()/5)%360},100%,65%)`:progress>0.95?`hsl(${Date.now()/5%360},100%,65%)`:'#fff200';
+        ctx.shadowBlur=isBoosting?35:25; ctx.shadowColor=mc;
+        drawStarShape(ctx,this.x,this.y,this.size,5,0.42,this.angle,mc);
+        ctx.shadowBlur=0; ctx.globalAlpha=1;
     }
 }
 
-// ============================================================================
-// 3. CÁC HÀM TIỆN ÍCH VẼ (DRAW UTILS)
-// ============================================================================
-
-function drawStarShape(ctx, x, y, r, points, m, angle, color) {
-    ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.beginPath(); ctx.moveTo(0, 0 - r);
-    for (let i = 0; i < points; i++) {
-        ctx.rotate(Math.PI / points); ctx.lineTo(0, 0 - (r * m));
-        ctx.rotate(Math.PI / points); ctx.lineTo(0, 0 - r);
+class Asteroid {
+    constructor(){
+        this.r=Math.random()*16+10; this.y=-60;
+        this.isHardcore=progress>0.7;
+        this.rotation=0; this.rotSpeed=(Math.random()-0.5)*0.1;
+        this.sides=Math.floor(Math.random()*3)+5;
+        if(this.isHardcore){
+            this.x=Math.random()*(canvas.width*1.5);
+            let bs=Math.random()*2.5+3.5; this.vy=bs*difficultyMultiplier; this.vx=-this.vy*0.35;
+            this.isSin=false; this.isHoming=Math.random()<0.15;
+        } else {
+            this.x=Math.random()*(canvas.width-this.r*2)+this.r;
+            let bs=Math.random()*2.1+2.5; this.vy=bs*difficultyMultiplier;
+            let mt=Math.random();
+            if(mt<0.3){ this.vx=(Math.random()-0.5)*2.5; this.isSin=false; }
+            else if(mt<0.6){ this.vx=0; this.isSin=true; this.sinOffset=Math.random()*Math.PI*2; this.baseX=this.x; }
+            else { this.vx=(Math.random()-0.5); this.isSin=false; }
+            this.isHoming=false;
+        }
+        this.trail=[]; this.maxTrailLength=10;
+        this.color=this.isHardcore?'#ff4400':'#ff8800';
+        this.trailColor=this.isHardcore?'rgba(255,60,0,0.35)':'rgba(255,140,0,0.3)';
+        this.homingColor='rgba(255,0,255,0.5)';
+        this.pts=[];
+        for(let i=0;i<this.sides;i++){
+            let a=(i/this.sides)*Math.PI*2, jitter=0.72+Math.random()*0.28;
+            this.pts.push({x:Math.cos(a)*this.r*jitter,y:Math.sin(a)*this.r*jitter});
+        }
     }
-    ctx.fillStyle = color; ctx.shadowBlur = 15; ctx.shadowColor = color; ctx.fill(); ctx.restore();
+    update(dt){
+        if(this.isHoming&&currentState===STATE.PLAYING){ let dx=playerObj.x-this.x,dy=playerObj.y-this.y,dist=Math.hypot(dx,dy); this.vx+=dx/dist*0.12; this.vy+=dy/dist*0.08; }
+        this.y+=this.vy;
+        if(this.isSin&&!this.isHardcore) this.x=this.baseX+Math.sin(this.y*0.005+this.sinOffset)*50; else this.x+=this.vx;
+        this.rotation+=this.rotSpeed;
+        this.trail.push({x:this.x,y:this.y}); if(this.trail.length>this.maxTrailLength) this.trail.shift();
+    }
+    draw(ctx){
+        if(this.trail.length>1){
+            ctx.beginPath(); ctx.moveTo(this.trail[0].x,this.trail[0].y);
+            for(let i=2;i<this.trail.length;i+=2) ctx.lineTo(this.trail[i].x,this.trail[i].y);
+            ctx.strokeStyle=this.trailColor; ctx.lineWidth=this.r*0.9; ctx.lineCap='round'; ctx.stroke();
+        }
+        ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(this.rotation);
+        ctx.beginPath(); ctx.moveTo(this.pts[0].x,this.pts[0].y);
+        for(let i=1;i<this.pts.length;i++) ctx.lineTo(this.pts[i].x,this.pts[i].y);
+        ctx.closePath(); ctx.fillStyle=this.color; ctx.shadowBlur=12; ctx.shadowColor=this.color; ctx.fill(); ctx.shadowBlur=0; ctx.restore();
+        if(this.isHoming){ ctx.beginPath(); ctx.arc(this.x,this.y,this.r+5,0,Math.PI*2); ctx.strokeStyle=this.homingColor; ctx.lineWidth=1.5; ctx.stroke(); }
+    }
 }
 
-function drawHeartShape(ctx, x, y, size, color) {
-    ctx.beginPath(); ctx.moveTo(x, y + size * 0.3);
-    ctx.bezierCurveTo(x, y, x - size, y, x - size, y + size * 0.4);
-    ctx.bezierCurveTo(x - size, y + size * 0.8, x, y + size * 1.3, x, y + size * 1.5);
-    ctx.bezierCurveTo(x, y + size * 1.3, x + size, y + size * 0.8, x + size, y + size * 0.4);
-    ctx.bezierCurveTo(x + size, y, x, y, x, y + size * 0.3);
-    ctx.fillStyle = color; ctx.shadowBlur = 12; ctx.shadowColor = color; ctx.fill(); ctx.shadowBlur = 0;
+class Heart {
+    constructor(){ this.r=16; this.x=Math.random()*(canvas.width-80)+40; this.y=-60; this.vy=2.2; this.pulse=0; this.sparkles=[]; }
+    update(dt){ this.y+=this.vy; this.pulse+=0.1; if(Math.random()<0.3) this.sparkles.push({x:this.x+(Math.random()-0.5)*20,y:this.y+10,life:1}); this.sparkles=this.sparkles.filter(s=>{ s.y+=1; s.life-=0.05; return s.life>0; }); }
+    draw(ctx){ this.sparkles.forEach(s=>{ ctx.globalAlpha=s.life*0.6; ctx.fillStyle='#ff6699'; ctx.beginPath(); ctx.arc(s.x,s.y,2,0,Math.PI*2); ctx.fill(); }); ctx.globalAlpha=1; let sc=1+Math.sin(this.pulse)*0.18; ctx.save(); ctx.translate(this.x,this.y); ctx.scale(sc,sc); drawHeartShapeCtx(ctx,0,0,10,'#ff1a1a'); ctx.restore(); }
+    }
+    
+// ── ENVIRONMENT ───────────────────────────────────────────────────────────────
+let nebulaTime=0;
+const NEBULAS=[{bx:0.2,by:0.3,r:220,h:220,a:0.035},{bx:0.8,by:0.6,r:180,h:260,a:0.028},{bx:0.5,by:0.8,r:260,h:180,a:0.022}];
+function drawNebula(){
+    nebulaTime+=0.0008;
+    NEBULAS.forEach((n,i)=>{ let nx=canvas.width*n.bx+Math.sin(nebulaTime+i)*25,ny=canvas.height*n.by+Math.cos(nebulaTime*0.7+i)*18; let g=ctx.createRadialGradient(nx,ny,0,nx,ny,n.r); g.addColorStop(0,`hsla(${n.h},70%,28%,${n.a})`); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(nx,ny,n.r,0,Math.PI*2); ctx.fill(); });
 }
 
-// ============================================================================
-// 4. KHỞI TẠO MÔI TRƯỜNG & KHU VỰC ĐÍCH
-// ============================================================================
-
-function initEnvironment() {
-    backgroundStars = [];
-    for (let i = 0; i < 150; i++) {
-        backgroundStars.push({
-            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-            size: Math.random() * 1.5 + 0.5, opacity: Math.random(),
-            speedOpacity: 0.005 + Math.random() * 0.01, speedY: Math.random() * 0.5 + 0.2
-        });
-    }
-
-    // Yêu cầu 6: Thêm các ngôi sao tĩnh/nhấp nháy ở khu vực đích
-    destinationStars = [];
-    for (let i = 0; i < 30; i++) {
-        let angle = Math.random() * Math.PI * 2;
-        let radius = Math.random() * 120; // Trải rộng quanh Tinh vân
-        destinationStars.push({
-            x: canvas.width / 2 + Math.cos(angle) * radius,
-            y: canvas.height * 0.15 + Math.sin(angle) * radius,
-            size: Math.random() * 3 + 1,
-            pulseOffset: Math.random() * Math.PI * 2
-        });
-    }
+function initEnvironment(){
+    backgroundStars=[];
+    for(let i=0;i<120;i++) backgroundStars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,size:Math.random()*1.8+0.3,opacity:Math.random(),speedOpacity:0.004+Math.random()*0.009,speedY:Math.random()*0.4+0.1,color:`hsl(${200+Math.random()*80},80%,${70+Math.random()*30}%)`});
+    destinationStars=[];
+    for(let i=0;i<20;i++){ let ang=Math.random()*Math.PI*2,rad=Math.random()*110; destinationStars.push({x:canvas.width/2+Math.cos(ang)*rad,y:canvas.height*0.15+Math.sin(ang)*rad,size:Math.random()*2.5+0.8,pulseOffset:Math.random()*Math.PI*2}); }
 }
 initEnvironment();
 
-function drawVIPDestination(alpha) {
-    if (alpha <= 0) return;
-    const destX = canvas.width / 2; const destY = canvas.height * 0.15;
-    ctx.save(); ctx.globalAlpha = alpha;
-    
-    // Tinh vân lõi
-    let time = Date.now() * 0.001;
-    let grad = ctx.createRadialGradient(destX, destY, 0, destX, destY, 180);
-    let pulse = (Math.sin(time * 2) + 1) / 2 * 0.2;
-    grad.addColorStop(0, `rgba(255, 242, 0, ${0.6 + pulse})`); // Lõi vàng đồng bộ
-    grad.addColorStop(0.4, `rgba(255, 150, 0, ${0.3 + pulse})`);
-    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(destX, destY, 180, 0, Math.PI * 2); ctx.fill();
-
-    // Vẽ các ngôi sao nhỏ xung quanh đích (Yêu cầu 6)
-    destinationStars.forEach(s => {
-        let starAlpha = (Math.sin(time * 5 + s.pulseOffset) + 1) / 2;
-        ctx.globalAlpha = alpha * starAlpha;
-        drawStarShape(ctx, s.x, s.y, s.size, 4, 0.2, time, "#ffffff");
-    });
-    ctx.globalAlpha = alpha;
-
-    // Vòng xoáy orbit
-    ctx.translate(destX, destY); ctx.rotate(time * 0.5);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.ellipse(0, 0, 80, 30, 0, 0, Math.PI * 2); ctx.stroke();
-    ctx.rotate(-time); ctx.beginPath(); ctx.ellipse(0, 0, 100, 40, Math.PI/4, 0, Math.PI * 2); ctx.stroke();
+function drawVIPDestination(alpha){
+    if(alpha<=0) return;
+    const dx=canvas.width/2,dy=canvas.height*0.15;
+    ctx.save(); ctx.globalAlpha=alpha;
+    let time=Date.now()*0.001, pulse=(Math.sin(time*2)+1)/2*0.2;
+    for(let l=0;l<2;l++){ let r=130+l*70,a=0.3-l*0.1+pulse; let g=ctx.createRadialGradient(dx,dy,0,dx,dy,r); g.addColorStop(0,`rgba(255,242,0,${a})`); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(dx,dy,r,0,Math.PI*2); ctx.fill(); }
+    destinationStars.forEach(s=>{ let sa=(Math.sin(time*4+s.pulseOffset)+1)/2; ctx.globalAlpha=alpha*sa*0.9; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(s.x,s.y,s.size*0.7,0,Math.PI*2); ctx.fill(); });
+    ctx.globalAlpha=alpha; ctx.translate(dx,dy);
+    [[80,30,0],[100,40,Math.PI/4]].forEach(([rx,ry,off],i)=>{ ctx.save(); ctx.rotate(time*(0.4+i*0.15)+off); ctx.strokeStyle=`rgba(255,255,255,${0.15+i*0.05})`; ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2); ctx.stroke(); ctx.restore(); });
     ctx.restore();
 }
 
-// ============================================================================
-// 5. GIAO DIỆN UI
-// ============================================================================
-
-function drawVIPUI() {
-    const barWidth = canvas.width * 0.65; const barHeight = 6;
-    const barX = (canvas.width - barWidth) / 2; const barY = 30;
-
-    ctx.fillStyle = "rgba(255, 242, 0, 0.8)";
-    ctx.font = "11px 'Segoe UI', sans-serif"; ctx.textAlign = "center"; ctx.letterSpacing = "2px";
-    ctx.fillText("VOYAGE PROGRESS", canvas.width / 2, barY - 12);
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.beginPath(); ctx.roundRect(barX, barY, barWidth, barHeight, 3); ctx.fill();
-
-    if (progress > 0) {
-        let fillWidth = barWidth * progress;
-        let grad = ctx.createLinearGradient(barX, barY, barX + fillWidth, barY);
-        grad.addColorStop(0, "#fff200");
-        grad.addColorStop(1, (progress > 0.7) ? "#ff3300" : "#ffaa00");
-
-        ctx.fillStyle = grad;
-        ctx.shadowBlur = 10; ctx.shadowColor = (progress > 0.7) ? "#ff3300" : "#fff200";
-        ctx.beginPath(); ctx.roundRect(barX, barY, fillWidth, barHeight, 3); ctx.fill(); ctx.shadowBlur = 0;
-
-        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(barX + fillWidth, barY + barHeight/2, 4, 0, Math.PI * 2); ctx.fill();
-    }
-
-    for (let i = 0; i < playerObj.maxHp; i++) {
-        let hpX = 40 + i * 35, hpY = 65;
-        if (i < playerObj.hp) drawHeartShape(ctx, hpX, hpY, 10, "#ff1a1a");
-        else {
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(hpX, hpY + 5, 8, 0, Math.PI * 2); ctx.stroke();
-        }
-    }
+// ── HUD UPDATE ────────────────────────────────────────────────────────────────
+function updateHUD(){
+    let pct=Math.round(progress*100);
+    progressFill.style.width=pct+'%'; pctLbl.textContent=pct+'%';
+    progressFill.style.background=progress>0.7?'linear-gradient(90deg,#ff8800,#ff3300)':'linear-gradient(90deg,#fff200,#ffaa00)';
+    progressFill.style.boxShadow=progress>0.7?'0 0 12px #ff3300,0 0 24px rgba(255,50,0,.4)':'0 0 12px #fff200,0 0 24px rgba(255,242,0,.4)';
+    hpHearts.forEach((h,i)=>h.classList.toggle('empty',i>=playerObj.hp));
+    scoreVal.textContent=score.toLocaleString();
+    // Energy bar
+    let ePct=energy/ENERGY_MAX;
+    energyFill.style.height=(ePct*100)+'%';
+    energyFill.className='';
+    if(isBoosting){ energyFill.classList.add('boost-active'); energyLabel.classList.add('boost-active'); energyCount.classList.add('boost-active'); }
+    else { energyLabel.classList.remove('boost-active'); energyCount.classList.remove('boost-active'); }
+    if(energy<8&&!isBoosting) energyFill.classList.add('low');
+    energyCount.textContent=Math.floor(energy);
 }
 
-// ============================================================================
-// 6. MAIN ENGINE LOOP & STATE MANAGEMENT
-// ============================================================================
+// ── COMBO ─────────────────────────────────────────────────────────────────────
+function addCombo(){ combo++; comboTimer=2500; if(!comboVisible){comboVisible=true;comboEl.style.opacity='1';} comboEl.textContent=`×${combo}`; score+=10*combo; }
+function resetCombo(){ combo=0; comboEl.style.opacity='0'; comboVisible=false; }
 
-let playerObj = new Player();
+// ── BULLET FIRE ───────────────────────────────────────────────────────────────
+const BULLET_SPEED=11;
+const BULLET_COOLDOWN=300;
+const SPREAD_ANGLE=10*(Math.PI/180); // 10° in radians
+let bulletCooldown=0;
+let isShooting=false, fireBtnHeld=false;
 
-function updateGame() {
-    let now = performance.now();
-    let dt = now - lastTime;
-    lastTime = now;
+function tryFire(){
+    if(energy<BULLET_COST||bulletCooldown>0||currentState!==STATE.PLAYING) return;
+    energy-=BULLET_COST; bulletCooldown=BULLET_COOLDOWN;
 
-    // Vẽ nền vũ trụ tĩnh
-    ctx.fillStyle = "#02000a"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    backgroundStars.forEach(star => {
-        if (currentState === GAME_STATE.PLAYING || currentState === GAME_STATE.AUTOPILOT) star.y += star.speedY;
-        if (star.y > canvas.height) star.y = 0;
-        star.opacity += star.speedOpacity;
-        if (star.opacity > 1 || star.opacity < 0.1) star.speedOpacity *= -1;
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(star.opacity)})`;
-        ctx.beginPath(); ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2); ctx.fill();
+    // Direction: normal = straight up; hardcore = angled 30° toward center
+    let baseAngle = progress>0.7 ? -Math.PI/2 - Math.PI/6 : -Math.PI/2;
+    // In pad mode: fire toward joystick direction if active
+    if(padMode&&(Math.abs(joyDX)>0.1||Math.abs(joyDY)>0.1)){
+        baseAngle=Math.atan2(joyDY,joyDX);
+    }
+
+    // 3-bullet fan at ±SPREAD_ANGLE
+    [-SPREAD_ANGLE,0,SPREAD_ANGLE].forEach(offset=>{
+        let a=baseAngle+offset;
+        bullets.push(new Bullet(playerObj.x,playerObj.y,Math.cos(a)*BULLET_SPEED,Math.sin(a)*BULLET_SPEED,progress>0.7));
     });
-
-    // LOGIC CHƠI GAME
-    if (currentState === GAME_STATE.PLAYING) {
-        elapsedTime += dt;
-        progress = Math.min(elapsedTime / GAME_DURATION, 1.0);
-
-        if (progress > 0.4) difficultyMultiplier = 1.0 + (progress - 0.4) * 1.5; 
-        if (elapsedTime > DESTINATION_TIME) destinationAlpha = Math.min(1.0, destinationAlpha + 0.005);
-
-        let spawnRate = 0.05 * difficultyMultiplier;
-        if (Math.random() < spawnRate && asteroids.length < 15) asteroids.push(new Asteroid());
-
-        if (progress > 0.1 && heartsSpawned < MAX_HEARTS_SPAWN) {
-            if (elapsedTime - lastHeartSpawnTime > 10000 && Math.random() < 0.05) {
-                hearts.push(new Heart()); heartsSpawned++; lastHeartSpawnTime = elapsedTime;
-            }
-        }
-
-        if (progress >= 1.0) {
-            currentState = GAME_STATE.AUTOPILOT;
-            playerObj.targetX = canvas.width / 2;
-            playerObj.targetY = canvas.height * 0.15;
-            playerObj.baseEasing = 0.03; 
-        }
-    }
-
-    if (currentState === GAME_STATE.PLAYING || currentState === GAME_STATE.AUTOPILOT) {
-        playerObj.update(dt);
-        processEntities(dt);
-    }
-
-    drawVIPDestination(destinationAlpha);
-    if (currentState === GAME_STATE.PLAYING || currentState === GAME_STATE.AUTOPILOT) drawVIPUI();
-    if (currentState !== GAME_STATE.FIREWORKS) playerObj.draw(ctx);
-
-    if (currentState === GAME_STATE.AUTOPILOT) {
-        let dist = Math.hypot(playerObj.x - playerObj.targetX, playerObj.y - playerObj.targetY);
-        if (dist < 10) {
-            currentState = GAME_STATE.FIREWORKS;
-            for (let i = 0; i < 150; i++) {
-                let p = new Particle(playerObj.x, playerObj.y, `hsl(${Math.random() * 360}, 100%, 60%)`);
-                p.vx *= 1.5; p.vy *= 1.5; p.decay = Math.random() * 0.015 + 0.005;
-                particles.push(p);
-            }
-        }
-    }
-
-    if (currentState === GAME_STATE.FIREWORKS) {
-        processEntities(dt); // Cho phép pháo hoa rơi
-        ctx.fillStyle = "#fff"; ctx.font = "bold 42px 'Segoe UI', sans-serif"; ctx.textAlign = "center";
-        ctx.shadowBlur = 20; ctx.shadowColor = "#fff200";
-        ctx.fillText("XUẤT SẮC!", canvas.width / 2, canvas.height / 2); ctx.shadowBlur = 0;
-    }
-
-    // Yêu cầu 4 & 5: XỬ LÝ MƯỢT MÀ KHI THUA (STATE MACHINE)
-    if (currentState === GAME_STATE.GAMEOVER_FADEOUT) {
-        opacityOverlay = Math.min(1.0, opacityOverlay + 0.02); // Tối dần mượt
-        drawGameOverScreen(opacityOverlay);
-        if (opacityOverlay >= 1) {
-            currentState = GAME_STATE.GAMEOVER_HOLD;
-            gameOverHoldTimer = 0;
-        }
-    } else if (currentState === GAME_STATE.GAMEOVER_HOLD) {
-        gameOverHoldTimer += dt;
-        drawGameOverScreen(1.0);
-        if (gameOverHoldTimer >= 2000) { // Chuẩn 2 giây
-            resetGameCore();
-            currentState = GAME_STATE.GAMEOVER_FADEIN;
-        }
-    } else if (currentState === GAME_STATE.GAMEOVER_FADEIN) {
-        opacityOverlay = Math.max(0, opacityOverlay - 0.03); // Sáng dần lên
-        ctx.fillStyle = `rgba(0, 0, 0, ${opacityOverlay})`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if (opacityOverlay <= 0) currentState = GAME_STATE.PLAYING; // Trở lại mượt mà
-    }
-
-    requestAnimationFrame(updateGame);
+    for(let k=0;k<4;k++) particles.push(new Particle(playerObj.x,playerObj.y,'#ffcc00'));
 }
 
-function drawGameOverScreen(alpha) {
-    ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = `rgba(255, 50, 50, ${alpha})`;
-    ctx.font = "bold 40px 'Segoe UI'"; ctx.textAlign = "center";
-    ctx.fillText("Ôi không!", canvas.width / 2, canvas.height / 2 - 10);
-    
-    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-    ctx.font = "20px 'Segoe UI'";
-    ctx.fillText("Cố lên nào!", canvas.width / 2, canvas.height / 2 + 30);
+// ── JOYSTICK ──────────────────────────────────────────────────────────────────
+let padMode=false;
+let joyActive=false, joyOriginX=0, joyOriginY=0, joyDX=0, joyDY=0, joyTouchId=null;
+const PAD_RADIUS=62, MOVE_SPEED=4.5;
+const joystickZone=document.getElementById('joystick-zone');
+const joystickKnob=document.getElementById('joystick-knob');
+const gamepadEl   =document.getElementById('gamepad');
+const btnFire     =document.getElementById('btn-fire');
+const btnBoostPad =document.getElementById('btn-boost');
+
+function togglePadMode(){
+    padMode=!padMode;
+    gamepadEl.classList.toggle('visible',padMode);
+    document.getElementById('btn-toggle-ctrl').textContent=padMode?'🖱 PTR':'🕹 PAD';
+    joyDX=0; joyDY=0;
+}
+document.getElementById('btn-toggle-ctrl').addEventListener('click',togglePadMode);
+
+let autoShownPad=false;
+canvas.addEventListener('touchstart',()=>{ if(!autoShownPad){autoShownPad=true; if(!padMode) togglePadMode();} },{passive:true,once:true});
+
+joystickZone.addEventListener('touchstart',e=>{
+    e.stopPropagation(); e.preventDefault();
+    let t=e.changedTouches[0]; joyTouchId=t.identifier; joyActive=true;
+    let rect=joystickZone.getBoundingClientRect();
+    joyOriginX=rect.left+rect.width/2; joyOriginY=rect.top+rect.height/2;
+    joystickKnob.classList.add('active');
+},{passive:false});
+
+joystickZone.addEventListener('touchmove',e=>{
+    e.stopPropagation(); e.preventDefault();
+    for(let t of e.changedTouches){
+        if(t.identifier===joyTouchId){
+            let dx=t.clientX-joyOriginX, dy=t.clientY-joyOriginY, dist=Math.hypot(dx,dy);
+            if(dist>PAD_RADIUS){ dx=dx/dist*PAD_RADIUS; dy=dy/dist*PAD_RADIUS; }
+            joyDX=dx/PAD_RADIUS; joyDY=dy/PAD_RADIUS;
+            joystickKnob.style.left=(70+dx)+'px'; joystickKnob.style.top=(70+dy)+'px';
+        }
+    }
+},{passive:false});
+
+joystickZone.addEventListener('touchend',e=>{
+    e.stopPropagation();
+    for(let t of e.changedTouches){ if(t.identifier===joyTouchId){ joyActive=false; joyDX=0; joyDY=0; joyTouchId=null; joystickKnob.style.left='50%'; joystickKnob.style.top='50%'; joystickKnob.classList.remove('active'); } }
+},{passive:false});
+
+function applyKeyboardToJoy(){
+    if(!padMode) return;
+    let dx=0,dy=0;
+    if(keys['ArrowLeft']||keys['KeyA']) dx-=1;
+    if(keys['ArrowRight']||keys['KeyD']) dx+=1;
+    if(keys['ArrowUp']||keys['KeyW']) dy-=1;
+    if(keys['ArrowDown']||keys['KeyS']) dy+=1;
+    if(dx||dy){ let len=Math.hypot(dx,dy); joyDX=dx/len; joyDY=dy/len; }
+    else if(!joyActive){ joyDX=0; joyDY=0; }
 }
 
-function processEntities(dt) {
-    for (let i = asteroids.length - 1; i >= 0; i--) {
-        let a = asteroids[i]; a.update(dt); a.draw(ctx);
-        if (currentState === GAME_STATE.PLAYING && !playerObj.invulnerable) {
-            if (Math.hypot(playerObj.x - a.x, playerObj.y - a.y) < playerObj.size + a.r * 0.8) {
-                playerObj.hp--; playerObj.invulnerable = true; playerObj.invulTimer = 1500;
-                for (let k = 0; k < 15; k++) particles.push(new Particle(a.x, a.y, a.color));
-                asteroids.splice(i, 1);
-                if (playerObj.hp <= 0) currentState = GAME_STATE.GAMEOVER_FADEOUT;
+btnFire.addEventListener('touchstart',e=>{ e.stopPropagation(); e.preventDefault(); isShooting=true; btnFire.classList.add('shooting'); },{passive:false});
+btnFire.addEventListener('touchend',  e=>{ e.stopPropagation(); isShooting=false; btnFire.classList.remove('shooting'); },{passive:false});
+btnBoostPad.addEventListener('touchstart',e=>{ e.stopPropagation(); e.preventDefault(); boostKeyHeld=true; btnBoostPad.classList.add('boosting'); },{passive:false});
+btnBoostPad.addEventListener('touchend',  e=>{ e.stopPropagation(); boostKeyHeld=false; btnBoostPad.classList.remove('boosting'); },{passive:false});
+
+// ── TUTORIAL / GAME OVER / WIN ────────────────────────────────────────────────
+document.getElementById('btn-start').addEventListener('click',()=>{
+    tutScreen.classList.add('hidden');
+    gameStarted=true;
+    lastTime=performance.now();
+});
+
+function showGameOver(){ gameoverScreen.classList.add('visible'); }
+document.getElementById('btn-replay-go').addEventListener('click',()=>{ gameoverScreen.classList.remove('visible'); opacityOverlay=1; resetGameCore(); currentState=STATE.GAMEOVER_FADEIN; });
+document.getElementById('btn-replay-win').addEventListener('click',()=>{ winScreen.classList.remove('visible'); opacityOverlay=1; resetGameCore(); currentState=STATE.GAMEOVER_FADEIN; });
+
+function resetGameCore(){
+    asteroids=[]; hearts=[]; particles=[]; shockwaves=[]; floatingTexts=[]; bullets=[];
+    heartsSpawned=0; lastHeartSpawnTime=-10000;
+    elapsedTime=0; progress=0; difficultyMultiplier=1.0; destinationAlpha=0;
+    score=0; combo=0; comboEl.style.opacity='0'; comboVisible=false;
+    energy=0; isBoosting=false; boostKeyHeld=false;
+    bulletCooldown=0; isShooting=false; fireBtnHeld=false;
+    joyDX=0; joyDY=0; joyActive=false;
+    joystickKnob.style.left='50%'; joystickKnob.style.top='50%';
+    playerObj=new Player();
+    gameoverScreen.classList.remove('visible'); winScreen.classList.remove('visible');
+}
+
+// ── CURSOR ────────────────────────────────────────────────────────────────────
+function drawCursor(){
+    cctx.clearRect(0,0,24,24); let t=Date.now()*0.004; cctx.save(); cctx.translate(12,12); cctx.rotate(t);
+    for(let i=0;i<4;i++){ cctx.save(); cctx.rotate(i*Math.PI/2); cctx.beginPath(); cctx.moveTo(8,0); cctx.lineTo(12,0); cctx.strokeStyle='rgba(255,242,0,0.9)'; cctx.lineWidth=1.5; cctx.stroke(); cctx.restore(); }
+    cctx.beginPath(); cctx.arc(0,0,3,0,Math.PI*2); cctx.fillStyle='#fff200'; cctx.shadowBlur=8; cctx.shadowColor='#fff200'; cctx.fill(); cctx.restore();
+}
+
+// ── PLAYER ────────────────────────────────────────────────────────────────────
+let playerObj=new Player();
+
+// ── PROCESS ENTITIES ──────────────────────────────────────────────────────────
+function processEntities(dt,speedMul=1){
+    for(let i=asteroids.length-1;i>=0;i--){
+        let a=asteroids[i];
+        if(speedMul!==1){ a.vy*=speedMul; a.vx*=speedMul; a.update(dt); a.vy/=speedMul; a.vx/=speedMul; }
+        else a.update(dt);
+        a.draw(ctx);
+        if(currentState===STATE.PLAYING&&!playerObj.invulnerable){
+            if(Math.hypot(playerObj.x-a.x,playerObj.y-a.y)<playerObj.size+a.r*0.75){
+                playerObj.hp--; playerObj.invulnerable=true; playerObj.invulTimer=1500;
+                for(let k=0;k<10;k++) particles.push(new Particle(a.x,a.y,a.color));
+                shockwaves.push(new Shockwave(a.x,a.y,a.isHardcore?'rgba(255,60,0,':'rgba(255,180,50,'));
+                triggerShake(a.isHardcore?16:10);
+                floatingTexts.push(new FloatText(playerObj.x,playerObj.y-30,'OUCH!','#ff4444'));
+                resetCombo(); hpHearts[playerObj.hp]&&(hpHearts[playerObj.hp].style.animation='pulse-hp 0.3s ease');
+                asteroids.splice(i,1);
+                if(playerObj.hp<=0){ currentState=STATE.GAMEOVER_FADEOUT; showGameOver(); }
                 continue;
             }
         }
-        if (a.y > canvas.height + 100 || a.x < -100 || a.x > canvas.width + 100) asteroids.splice(i, 1);
+        if(a.y>canvas.height+120||a.x<-150||a.x>canvas.width+150){ asteroids.splice(i,1); score+=5; addCombo(); }
     }
-
-    for (let i = hearts.length - 1; i >= 0; i--) {
-        let h = hearts[i]; h.update(dt); h.draw(ctx);
-        if (currentState === GAME_STATE.PLAYING && Math.hypot(playerObj.x - h.x, playerObj.y - h.y) < playerObj.size + h.r) {
-    if (playerObj.hp < playerObj.maxHp) playerObj.hp++;
-            for (let k = 0; k < 20; k++) particles.push(new Particle(h.x, h.y, "#ff1a1a"));
-            hearts.splice(i, 1); continue;
+    for(let i=hearts.length-1;i>=0;i--){
+        let h=hearts[i];
+        if(speedMul!==1){ h.vy*=speedMul; h.update(dt); h.vy/=speedMul; } else h.update(dt);
+        h.draw(ctx);
+        if(currentState===STATE.PLAYING&&Math.hypot(playerObj.x-h.x,playerObj.y-h.y)<playerObj.size+h.r*1.5){
+            if(playerObj.hp<playerObj.maxHp) playerObj.hp++;
+            for(let k=0;k<12;k++) particles.push(new Particle(h.x,h.y,'#ff4466'));
+            shockwaves.push(new Shockwave(h.x,h.y,'rgba(255,50,100,'));
+            floatingTexts.push(new FloatText(h.x,h.y-20,'+1 HP ♥','#ff4466'));
+            score+=50; hearts.splice(i,1);
         }
-        if (h.y > canvas.height + 50) hearts.splice(i, 1);
+        if(h.y>canvas.height+60) hearts.splice(i,1);
     }
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i]; p.update(dt); p.draw(ctx);
-        if (p.life <= 0) particles.splice(i, 1);
-    }
-}
-
-function resetGameCore() {
-    elapsedTime = 0; progress = 0; difficultyMultiplier = 1.0; destinationAlpha = 0;
-    heartsSpawned = 0; lastHeartSpawnTime = -10000;
-    playerObj = new Player(); asteroids = []; hearts = []; particles = [];
-}
-
-// ============================================================================
-// 7. SỰ KIỆN ĐIỀU KHIỂN (Yêu cầu 2: Tọa độ y bị trừ đi 25px để ngón tay không che)
-// ============================================================================
-
-// ============================================================================
-// 7. SỰ KIỆN ĐIỀU KHIỂN (FIX TRIỆT ĐỂ ĐỘ LỆCH)
-// ============================================================================
-
-function updateTargetPosition(clientX, clientY) {
-    if (currentState === GAME_STATE.PLAYING) {
-        const rect = canvas.getBoundingClientRect();
-        
-        // Công thức tính toán chính xác tọa độ theo tỉ lệ hiển thị
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-
-        playerObj.targetX = (clientX - rect.left) * scaleX;
-        playerObj.targetY = (clientY - rect.top) * scaleY;
+    if(particles.length>120) particles.length=120;
+    for(let i=particles.length-1;i>=0;i--){ particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1); }
+    for(let i=shockwaves.length-1;i>=0;i--){ shockwaves[i].update(); shockwaves[i].draw(ctx); if(shockwaves[i].dead) shockwaves.splice(i,1); }
+    for(let i=floatingTexts.length-1;i>=0;i--){ floatingTexts[i].update(); floatingTexts[i].draw(ctx); if(floatingTexts[i].dead) floatingTexts.splice(i,1); }
+    // Bullets
+    for(let i=bullets.length-1;i>=0;i--){
+        let b=bullets[i]; b.update(speedMul); b.draw(ctx);
+        if(b.dead){ bullets.splice(i,1); continue; }
+        let hit=false;
+        for(let j=asteroids.length-1;j>=0;j--){
+            if(Math.hypot(b.x-asteroids[j].x,b.y-asteroids[j].y)<asteroids[j].r+b.r){
+                for(let k=0;k<8;k++) particles.push(new Particle(asteroids[j].x,asteroids[j].y,asteroids[j].color));
+                shockwaves.push(new Shockwave(asteroids[j].x,asteroids[j].y,asteroids[j].isHardcore?'rgba(255,60,0,':'rgba(255,180,50,'));
+                floatingTexts.push(new FloatText(asteroids[j].x,asteroids[j].y-20,'💥 +20','#ffaa00'));
+                score+=20; addCombo(); asteroids.splice(j,1); hit=true; break;
+            }
+        }
+        if(hit) bullets.splice(i,1);
     }
 }
 
-window.addEventListener('mousemove', (e) => {
-    updateTargetPosition(e.clientX, e.clientY);
-});
+// ── MAIN LOOP ─────────────────────────────────────────────────────────────────
+function updateGame(){
+    let now=performance.now(), dt=now-lastTime; lastTime=now;
+    updateShake(); drawCursor();
 
-window.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    if (e.touches.length > 0) {
-        // Lấy tọa độ điểm chạm đầu tiên
-        updateTargetPosition(e.touches[0].clientX, e.touches[0].clientY);
+    ctx.fillStyle='#02000a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    drawNebula();
+
+    backgroundStars.forEach(star=>{
+        if(currentState===STATE.PLAYING||currentState===STATE.AUTOPILOT) star.y+=isBoosting?star.speedY*3.5:star.speedY;
+        if(star.y>canvas.height) star.y=0;
+        star.opacity+=star.speedOpacity; if(star.opacity>1||star.opacity<0.1) star.speedOpacity*=-1;
+        ctx.fillStyle=star.color.replace(')',`,${Math.abs(star.opacity)})`).replace('hsl','hsla');
+        ctx.beginPath(); ctx.arc(star.x,star.y,star.size,0,Math.PI*2); ctx.fill();
+    });
+
+    ctx.save(); ctx.translate(screenShake.x,screenShake.y);
+
+    if(currentState===STATE.PLAYING&&gameStarted){
+        // Energy: boost drain / regen
+        if(boostKeyHeld&&energy>=BOOST_MIN_E){ isBoosting=true; }
+        else if(!boostKeyHeld||energy<=0){ isBoosting=false; }
+        if(isBoosting){
+            energy=Math.max(0,energy-BOOST_DRAIN_E*(dt/1000));
+            if(energy===0) isBoosting=false;
+            playerObj.invulnerable=true; playerObj.invulTimer=200;
+        } else {
+            energy=Math.min(ENERGY_MAX,energy+ENERGY_REGEN*(dt/1000));
+        }
+
+        let timeScale=isBoosting?2:1;
+        elapsedTime+=dt*timeScale; progress=Math.min(elapsedTime/GAME_DURATION,1);
+        if(progress>0.4) difficultyMultiplier=1+(progress-0.4)*1.6;
+        if(elapsedTime>DESTINATION_TIME) destinationAlpha=Math.min(1,destinationAlpha+0.005);
+
+        let spawnRate=(0.05*difficultyMultiplier*(progress>0.7?1.3:1))*(isBoosting?2:1);
+        if(Math.random()<spawnRate&&asteroids.length<(isBoosting?30:18)) asteroids.push(new Asteroid());
+        if(progress>0.1&&heartsSpawned<MAX_HEARTS_SPAWN&&elapsedTime-lastHeartSpawnTime>10000&&Math.random()<0.05){ hearts.push(new Heart()); heartsSpawned++; lastHeartSpawnTime=elapsedTime; }
+        if(comboTimer>0){ comboTimer-=dt; if(comboTimer<=0) resetCombo(); }
+        if(progress>=1){ currentState=STATE.AUTOPILOT; playerObj.targetX=canvas.width/2; playerObj.targetY=canvas.height*0.15; playerObj.baseEasing=0.025; }
     }
-}, { passive: false });
-                             
-        
-requestAnimationFrame(updateGame);
 
+    if((currentState===STATE.PLAYING&&gameStarted)||currentState===STATE.AUTOPILOT){
+        if(currentState===STATE.PLAYING){
+            applyKeyboardToJoy();
+            if(padMode){ let spd=MOVE_SPEED*(isBoosting?1.6:1); playerObj.targetX=clamp(playerObj.targetX+joyDX*spd,20,canvas.width-20); playerObj.targetY=clamp(playerObj.targetY+joyDY*spd,20,canvas.height-20); }
+            else { playerObj.targetX=mouseX; playerObj.targetY=mouseY; }
+            if(bulletCooldown>0) bulletCooldown-=Math.min(dt,50);
+            if((isShooting||fireBtnHeld)&&bulletCooldown<=0) tryFire();
+        }
+        let speedMul=isBoosting?2:1;
+        playerObj.update(dt); processEntities(dt,speedMul);
+    }
+
+    drawVIPDestination(destinationAlpha);
+    if(currentState!==STATE.FIREWORKS&&currentState!==STATE.GAMEOVER_FADEOUT&&currentState!==STATE.GAMEOVER_HOLD) playerObj.draw(ctx);
+
+    if(currentState===STATE.AUTOPILOT){
+        let dist=Math.hypot(playerObj.x-playerObj.targetX,playerObj.y-playerObj.targetY);
+        if(dist<12){ currentState=STATE.FIREWORKS; winScreen.classList.add('visible'); for(let i=0;i<120;i++){ let p=new Particle(playerObj.x,playerObj.y,`hsl(${Math.random()*360},100%,60%)`); p.vx*=2; p.vy*=2; p.decay=Math.random()*0.012+0.004; particles.push(p); } }
+    }
+    if(currentState===STATE.FIREWORKS){
+        if(Math.random()<0.04){ let fx=canvas.width/2+(Math.random()-0.5)*200,fy=canvas.height*0.15+(Math.random()-0.5)*100; for(let i=0;i<15;i++) particles.push(new Particle(fx,fy,`hsl(${Math.random()*360},100%,65%)`)); }
+        for(let i=particles.length-1;i>=0;i--){ particles[i].update(); particles[i].draw(ctx); if(particles[i].life<=0) particles.splice(i,1); }
+    }
+
+    ctx.restore();
+
+    if((currentState===STATE.PLAYING&&gameStarted)||currentState===STATE.AUTOPILOT||currentState===STATE.FIREWORKS) updateHUD();
+
+    if(currentState===STATE.GAMEOVER_FADEOUT){ opacityOverlay=Math.min(1,opacityOverlay+0.02); ctx.fillStyle=`rgba(0,0,0,${opacityOverlay})`; ctx.fillRect(0,0,canvas.width,canvas.height); if(opacityOverlay>=1) currentState=STATE.GAMEOVER_HOLD; }
+    else if(currentState===STATE.GAMEOVER_HOLD){ ctx.fillStyle='rgba(0,0,0,0.92)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+    else if(currentState===STATE.GAMEOVER_FADEIN){ opacityOverlay=Math.max(0,opacityOverlay-0.025); ctx.fillStyle=`rgba(0,0,0,${opacityOverlay})`; ctx.fillRect(0,0,canvas.width,canvas.height); if(opacityOverlay<=0) currentState=STATE.PLAYING; }
+
+    requestAnimationFrame(updateGame);
+}
+updateGame();
 </script>
 </body>
 </html>
