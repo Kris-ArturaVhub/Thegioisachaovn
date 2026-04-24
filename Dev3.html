@@ -83,7 +83,7 @@ let progress = 0;
 let difficultyMultiplier = 1.0;
 let destinationAlpha = 0;
 
-const MAX_HEARTS_SPAWN = 4;
+const MAX_HEARTS_SPAWN = 7;
 let heartsSpawned = 0;
 let lastHeartSpawnTime = -10000;
 
@@ -106,8 +106,8 @@ class Player {
         this.targetY = canvas.height * 0.8;
         this.size = 20;
         this.angle = 0;
-        this.hp = 3;
-        this.maxHp = 3;
+        this.hp = 5;
+        this.maxHp = 5;
         this.invulnerable = false;
         this.invulTimer = 0;
         this.trail = [];
@@ -167,7 +167,7 @@ class Asteroid {
         if (this.isHardcore) {
             // Hardcore: Quỹ đạo mưa sao băng chéo, nhanh hơn
             this.x = Math.random() * (canvas.width * 1.5);
-            let baseSpeed = Math.random() * 3.5 + 5;
+            let baseSpeed = Math.random() * 3.5 + 4;
             this.vy = baseSpeed * difficultyMultiplier;
             this.vx = -this.vy * 0.4; 
             this.isSin = false;
@@ -429,7 +429,7 @@ function updateGame() {
         if (Math.random() < spawnRate && asteroids.length < 15) asteroids.push(new Asteroid());
 
         if (progress > 0.1 && heartsSpawned < MAX_HEARTS_SPAWN) {
-            if (elapsedTime - lastHeartSpawnTime > 10000 && Math.random() < 0.02) {
+            if (elapsedTime - lastHeartSpawnTime > 10000 && Math.random() < 0.05) {
                 hearts.push(new Heart()); heartsSpawned++; lastHeartSpawnTime = elapsedTime;
             }
         }
