@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Star V4.5 - by Kris Artura</title>
+    <title>Vortex Star V1</title>
     <style>
         body {
             margin: 0;
@@ -167,7 +167,7 @@ class Asteroid {
         if (this.isHardcore) {
             // Hardcore: Quỹ đạo mưa sao băng chéo, nhanh hơn
             this.x = Math.random() * (canvas.width * 1.5);
-            let baseSpeed = Math.random() * 3.5 + 4;
+            let baseSpeed = Math.random() * 3.5 + 5;
             this.vy = baseSpeed * difficultyMultiplier;
             this.vx = -this.vy * 0.4; 
             this.isSin = false;
@@ -201,7 +201,7 @@ class Asteroid {
         this.y += this.vy;
         
         if (this.isSin && !this.isHardcore) {
-            this.x = this.baseX + Math.sin(this.y * 0.005 + this.sinOffset) * 60;
+            this.x = this.baseX + Math.sin(this.y * 0.005 + this.sinOffset) * 47;
         } else {
             this.x += this.vx;
         }
