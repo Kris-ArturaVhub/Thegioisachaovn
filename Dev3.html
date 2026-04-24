@@ -16,8 +16,11 @@
         }
         canvas {
             display: block;
-            width: 100vw;
-            height: 100vh;
+            position: absolute; /* Khóa vị trí tuyệt đối */
+    top: 0;
+    left: 0;
+            width: 100%;
+            height: 100%;
         }
         #author-tag {
             position: absolute;
@@ -552,12 +555,14 @@ function resetGameCore() {
 
 function updateTargetPosition(clientX, clientY) {
     if (currentState === GAME_STATE.PLAYING) {
-        // Lấy thông số vị trí thực tế của Canvas trên màn hình
         const rect = canvas.getBoundingClientRect();
         
-        // Tính toán tọa độ chính xác bên trong Canvas
-        playerObj.targetX = clientX - rect.left;
-        playerObj.targetY = clientY - rect.top;
+        // Công thức tính toán chính xác tọa độ theo tỉ lệ hiển thị
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        playerObj.targetX = (clientX - rect.left) * scaleX;
+        playerObj.targetY = (clientY - rect.top) * scaleY;
     }
 }
 
@@ -566,11 +571,13 @@ window.addEventListener('mousemove', (e) => {
 });
 
 window.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // Ngăn cuộn trang
+    e.preventDefault();
     if (e.touches.length > 0) {
+        // Lấy tọa độ điểm chạm đầu tiên
         updateTargetPosition(e.touches[0].clientX, e.touches[0].clientY);
     }
 }, { passive: false });
+                             
         
 requestAnimationFrame(updateGame);
 
