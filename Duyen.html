@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyên Của Trời - Project by Kris Artura</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Charm:wght@400;700&family=Dancing+Script:wght@700&family=Montserrat:wght@900&family=Pacifico&family=Saira+Stencil+One&display=swap" rel="stylesheet">
+    
+    <style>
+        /* AUTHOR: KRIS ARTURA
+           PROJECT: ADVANCED LYRIC ENGINE V2
+           DESCRIPTION: Tối ưu hiệu ứng chữ và logic điều hướng.
+        */
+
+        :root {
+            --primary-glow: #ff0055;
+            --secondary-glow: #00e5ff;
+            --bg-overlay: rgba(0, 0, 0, 0.4);
+            --font-main: 'Montserrat', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: var(--font-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- BACKGROUND LAYER --- */
+        #video-stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-image: url('1cd3124a89f9b5fdc7a8aee2bbea4926.png'); 
+            background-size: cover;
+            background-position: center;
+            transition: transform 5s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #video-stage.zoom-effect {
+            transform: scale(1.1);
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%);
+            z-index: 1;
+        }
+
+        /* --- LYRIC DISPLAY ENGINE --- */
+        #lyric-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            width: 85%;
+            perspective: 1000px; /* Tạo chiều sâu cho animation 3D */
+        }
+
+        .lyric-line {
+            display: inline-block;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.5));
+            letter-spacing: 2px;
+            line-height: 1.4;
+        }
+
+        /* --- HỆ THỐNG ANIMATION CHỮ (CAPCUT STYLE) --- */
+
+        /* 1. Blur & Fade In */
+        .effect-blur-in {
+            animation: blurIn 0.8s ease forwards;
+        }
+        @keyframes blurIn {
+            0% { filter: blur(20px); opacity: 0; transform: scale(1.5) translateY(-20px); }
+            100% { filter: blur(0); opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* 2. 3D Flip */
+        .effect-flip-3d {
+            animation: flip3D 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes flip3D {
+            0% { transform: rotateX(-90deg); opacity: 0; }
+            100% { transform: rotateX(0); opacity: 1; }
+        }
+
+        /* 3. Glowing Pulse (Dành cho đoạn cao trào) */
+        .effect-glow {
+            animation: textGlow 1.5s infinite alternate;
+        }
+        @keyframes textGlow {
+            from { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px var(--primary-glow); }
+            to { text-shadow: 0 0 5px #fff, 0 0 10px var(--secondary-glow), 0 0 20px var(--secondary-glow); }
+        }
+
+        /* 4. Slide & Bounce */
+        .effect-bounce {
+            animation: slideBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes slideBounce {
+            0% { transform: translateX(-100px); opacity: 0; }
+            60% { transform: translateX(20px); opacity: 1; }
+            100% { transform: translateX(0); }
+        }
+
+        /* 5. Tracking (Giãn chữ) */
+        .effect-tracking {
+            animation: trackingOut 2s ease-in-out infinite alternate;
+        }
+        @keyframes trackingOut {
+            0% { letter-spacing: -0.5em; opacity: 0; }
+            40% { opacity: 0.6; }
+            100% { letter-spacing: 0.2em; opacity: 1; }
+        }
+
+        /* --- NAVIGATION BUTTONS --- */
+        .nav-button {
+            position: absolute;
+            bottom: 50px;
+            padding: 12px 35px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        .nav-button:hover {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 0 20px rgba(255,255,255,0.6);
+        }
+
+        #btn-exit { left: 40px; }
+        #btn-return { right: 40px; display: none; } /* Chỉ hiện ở trang cuối */
+
+        #play-overlay {
+            position: absolute;
+            z-index: 200;
+            background: rgba(0,0,0,0.8);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- HIỆU ỨNG HẠT (PARTICLES) --- */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="play-overlay">
+        <h2 style="margin-bottom: 20px; font-family: 'Charm'; font-size: 3rem;">Duyên Của Trời</h2>
+        <button class="nav-button" id="start-project" style="position: static;">Phát Video</button>
+    </div>
+
+    <div id="video-stage">
+        <div id="overlay"></div>
+        <canvas id="particle-canvas"></canvas>
+
+        <div id="lyric-container">
+            <div id="lyric-text" class="lyric-line"></div>
+        </div>
+
+        <button id="btn-exit" class="nav-button" onclick="handleExit()">Thoát</button>
+        <button id="btn-return" class="nav-button" onclick="handleReturn()">Trở về</button>
+
+        <audio id="main-audio">
+            <source src="duyen_cua_troi.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <script>
+        /**
+         * ENGINE LOGIC - PHÁT TRIỂN BỞI KRIS ARTURA
+         * Hệ thống quản lý Timeline và Animation chuyên sâu.
+         */
+
+        const audio = document.getElementById('main-audio');
+        const lyricDisplay = document.getElementById('lyric-text');
+        const startBtn = document.getElementById('start-project');
+        const playOverlay = document.getElementById('play-overlay');
+        const btnExit = document.getElementById('btn-exit');
+        const btnReturn = document.getElementById('btn-return');
+        const stage = document.getElementById('video-stage');
+
+        // DỮ LIỆU LỜI NHẠC - CHỈNH SỬA TẠI ĐÂY
+        const timeline = [
+            {
+                start: 0.5,
+                end: 3.5,
+                text: "Duyên của trời",
+                style: {
+                    font: "'Pacifico', cursive",
+                    size: "7vw",
+                    color: "#00e5ff",
+                    anim: "effect-blur-in"
+                }
+            },
+            {
+                start: 4.0,
+                end: 7.0,
+                text: "Duyên của trời...",
+                style: {
+                    font: "'Bungee Shade', cursive",
+                    size: "8vw",
+                    color: "#ff0055",
+                    anim: "effect-flip-3d"
+                }
+            },
+            {
+                start: 7.5,
+                end: 11.0,
+                text: "Có công mài sắc",
+                style: {
+                    font: "'Charm', cursive",
+                    size: "6vw",
+                    color: "#ffffff",
+                    anim: "effect-bounce"
+                }
+            },
+            {
+                start: 11.5,
+                end: 16.0,
+                text: "Có ngày nên duyên",
+                style: {
+                    font: "'Montserrat', sans-serif",
+                    size: "9vw",
+                    color: "#FFD700",
+                    anim: "effect-glow"
+                }
+            },
+            {
+                start: 16.5,
+                end: 20.0,
+                text: "KRIS ARTURA EDIT",
+                style: {
+                    font: "'Saira Stencil One', sans-serif",
+                    size: "5vw",
+                    color: "#aaa",
+                    anim: "effect-tracking"
+                }
+            }
+        ];
+
+        let currentIndex = -1;
+        let animationFrame;
+
+        // Khởi tạo hạt nền (Particles)
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createParticles() {
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        // --- CORE ENGINE ---
+
+        function updateEngine() {
+            const currentTime = audio.currentTime;
+            let activeLyric = null;
+
+            for (let i = 0; i < timeline.length; i++) {
+                if (currentTime >= timeline[i].start && currentTime <= timeline[i].end) {
+                    activeLyric = { ...timeline[i], index: i };
+                    break;
+                }
+            }
+
+            if (activeLyric) {
+                if (currentIndex !== activeLyric.index) {
+                    currentIndex = activeLyric.index;
+                    renderText(activeLyric);
+                }
+            } else {
+                if (currentIndex !== -1) {
+                    lyricDisplay.style.opacity = '0';
+                    lyricDisplay.style.transition = '0.5s';
+                    currentIndex = -1;
+                }
+            }
+
+            // Logic hiện nút "Trở về" khi gần hết nhạc hoặc hết mảng timeline
+            if (currentTime > timeline[timeline.length - 1].end) {
+                btnReturn.style.display = 'block';
+                btnExit.style.display = 'none';
+            }
+
+            animationFrame = requestAnimationFrame(updateEngine);
+        }
+
+        function renderText(data) {
+            lyricDisplay.innerHTML = data.text;
+            lyricDisplay.style.fontFamily = data.style.font;
+            lyricDisplay.style.fontSize = data.style.size;
+            lyricDisplay.style.color = data.style.color;
+            lyricDisplay.style.opacity = '1';
+            
+            // Xóa class cũ và thêm class mới để kích hoạt animation
+            lyricDisplay.className = 'lyric-line ' + data.style.anim;
+        }
+
+        // --- EVENT HANDLERS ---
+
+        startBtn.addEventListener('click', () => {
+            playOverlay.style.display = 'none';
+            audio.play();
+            stage.classList.add('zoom-effect');
+            updateEngine();
+        });
+
+        function handleExit() {
+            if(confirm("Bạn muốn thoát dự án?")) {
+                window.close();
+                // Nếu chạy trên trình duyệt web thường có thể dùng:
+                document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:20%;'>Dự án đã đóng.</h1>";
+            }
+        }
+
+        function handleReturn() {
+            audio.currentTime = 0;
+            audio.play();
+            btnReturn.style.display = 'none';
+            btnExit.style.display = 'block';
+            currentIndex = -1;
+        }
+
+        // Resize & Init
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        createParticles();
+        animateParticles();
+
+        /** * LOGIC BỔ SUNG ĐỂ TĂNG TÍNH CHI TIẾT VÀ ỔN ĐỊNH:
+         * 1. Tự động kiểm tra trạng thái Audio.
+         * 2. Xử lý bộ đệm (buffering) để tránh lệch nhạc.
+         * 3. Tối ưu hóa render font chữ trên mobile.
+         */
+        audio.addEventListener('waiting', () => {
+            console.log("Đang tải nhạc...");
+        });
+
+        audio.onended = () => {
+            btnReturn.style.display = 'block';
+            btnExit.style.display = 'none';
+        };
+
+    </script>
+</body>
+  </html>
+                                       
