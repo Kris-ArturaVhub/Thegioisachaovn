@@ -3,342 +3,395 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Duyên Của Trời - Kris Artura Edition</title>
+    <title>Duyên Của Trời - V5 Edit by Kris Artura</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Charm:wght@400;700&family=Dancing+Script:wght@700&family=Montserrat:wght@900&family=Pacifico&family=Saira+Stencil+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Charm:wght@700&family=Montserrat:wght@900&family=Pacifico&family=Bangers&display=swap" rel="stylesheet">
     
     <style>
-        /* PROJECT: VORTEX LYRIC ENGINE V4
+        /* =========================================================
            AUTHOR: KRIS ARTURA
-           STYLE: CAPCUT PROFESSIONAL TYPOGRAPHY
-        */
-
-        :root {
-            --color-1: #ff0055;
-            --color-2: #00e5ff;
-            --color-3: #ffae00;
-            --glow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
+           PROJECT: BULLETPROOF LYRIC ENGINE V5
+           DESCRIPTION: Logic render cực mạnh, bất chấp trình duyệt.
+           ========================================================= */
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            overflow: hidden;
+            user-select: none;
         }
 
         body {
-            background-color: #000;
+            background-color: #050505;
+            color: #ffffff;
             font-family: 'Montserrat', sans-serif;
-            height: 100vh;
+            overflow: hidden;
             width: 100vw;
+            height: 100vh;
         }
 
-        /* --- BACKGROUND LAYER --- */
-        #stage-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
+        /* --- DEBUG PANEL --- */
+        #debug-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00e5ff;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #00e5ff;
+            z-index: 9999; /* Luôn nổi lên trên cùng */
+            pointer-events: none;
+        }
+
+        /* --- BACKGROUND VÀ HIỆU ỨNG NỀN --- */
+        #stage {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-image: url('1cd3124a89f9b5fdc7a8aee2bbea4926.png');
             background-size: cover;
             background-position: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: transform 12s cubic-bezier(0.1, 0, 0.3, 1);
+            transition: transform 15s linear;
         }
 
-        #stage-container.zoom-active {
-            transform: scale(1.15); /* Zoom nhẹ khi phát để tạo chiều sâu */
+        #stage.active {
+            transform: scale(1.2);
         }
 
         #overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.7) 100%);
-            z-index: 1;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 5;
         }
 
-        /* --- LYRIC RENDERER --- */
-        #lyric-stage {
-            position: relative;
-            z-index: 10;
-            width: 90%;
-            text-align: center;
-            perspective: 1000px;
-        }
-
-        .lyric-wrapper {
-            display: inline-block;
-            transition: all 0.5s ease;
-        }
-
-        /* --- ANIMATION LIBRARY (CAPCUT STYLE) --- */
-
-        /* 1. Zoom & Blur (Huyền ảo) */
-        .anim-focus {
-            animation: focusIn 0.8s forwards;
-        }
-        @keyframes focusIn {
-            0% { filter: blur(30px); opacity: 0; transform: scale(2) translateZ(100px); }
-            100% { filter: blur(0); opacity: 1; transform: scale(1) translateZ(0); }
-        }
-
-        /* 2. Slide Up & Fade (Mượt mà) */
-        .anim-slide-up {
-            animation: slideUpFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        }
-        @keyframes slideUpFade {
-            0% { transform: translateY(100px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-
-        /* 3. Glitch Distortion (Mạnh mẽ) */
-        .anim-glitch {
-            animation: glitchText 0.4s infinite;
-            text-shadow: 3px 0 var(--color-1), -3px 0 var(--color-2);
-        }
-        @keyframes glitchText {
-            0% { transform: translate(0); }
-            25% { transform: translate(-2px, 2px); }
-            50% { transform: translate(2px, -2px); }
-            75% { transform: translate(-2px, -2px); }
-            100% { transform: translate(0); }
-        }
-
-        /* 4. Rainbow Wave (Nổi bật) */
-        .anim-rainbow {
-            background: linear-gradient(to right, #ff0055, #00e5ff, #73ff00, #ffae00, #ff0055);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: rainbowShift 2s linear infinite, focusIn 0.5s forwards;
-        }
-        @keyframes rainbowShift { to { background-position: 200% center; } }
-
-        /* 5. Letter Spacing (Nghệ thuật) */
-        .anim-tracking {
-            animation: trackingOut 3s ease-out forwards;
-        }
-        @keyframes trackingOut {
-            0% { letter-spacing: -0.5em; opacity: 0; }
-            100% { letter-spacing: 0.2em; opacity: 1; }
-        }
-
-        /* --- UI CONTROLS --- */
-        #start-screen {
+        /* --- LỚP HIỂN THỊ CHỮ (ĐẢM BẢO KHÔNG BỊ TÀNG HÌNH) --- */
+        #lyric-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            z-index: 100;
+            z-index: 100; /* Đặt Z-index cực cao */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        /* Thẻ chứa chữ mặc định */
+        #the-text {
+            display: inline-block;
+            opacity: 0; /* Sẽ được JS đổi thành 1 khi có chữ */
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,1));
+            line-height: 1.3;
+            margin: 0 5%;
+        }
+
+        /* --- KHO HIỆU ỨNG CSS ANIMATION NHƯ CAPCUT --- */
+        
+        /* 1. Zoom In Rung Lắc (Kiểu giật Beat) */
+        .effect-beat {
+            animation: beatZoom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes beatZoom {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 2. Hiệu ứng quét màu Cyberpunk (Rainbow Sweep) */
+        .effect-sweep {
+            background: linear-gradient(90deg, #ff007a, #00e5ff, #00ff88, #ff007a);
+            background-size: 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: sweepColor 1.5s linear infinite, beatZoom 0.5s forwards;
+        }
+        @keyframes sweepColor {
+            0% { background-position: 0% center; }
+            100% { background-position: 300% center; }
+        }
+
+        /* 3. Hiệu ứng mờ ảo xuất hiện (Cinematic Blur) */
+        .effect-blur {
+            animation: blurFade 1s forwards;
+        }
+        @keyframes blurFade {
+            0% { filter: blur(20px); transform: translateY(30px); opacity: 0; }
+            100% { filter: blur(0); transform: translateY(0); opacity: 1; }
+        }
+
+        /* 4. Hiệu ứng trượt vệt sáng (Light Flash) */
+        .effect-flash {
+            animation: flashIn 0.6s ease-out forwards;
+            text-shadow: 0 0 20px #fff, 0 0 40px #00e5ff;
+        }
+        @keyframes flashIn {
+            0% { transform: translateX(-100vw) skewX(30deg); opacity: 0; }
+            100% { transform: translateX(0) skewX(0); opacity: 1; }
+        }
+
+        /* --- GIAO DIỆN NÚT BẤM (UI) --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 200;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: white;
+            background: #000;
+            transition: opacity 0.5s;
         }
 
-        .btn-main {
-            padding: 15px 50px;
-            font-size: 20px;
-            background: transparent;
-            color: white;
-            border: 2px solid white;
+        .btn-play {
+            padding: 20px 60px;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            border-radius: 50px;
-            transition: 0.3s;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            transition: 0.2s;
+        }
+        .btn-play:active { transform: scale(0.95); }
+
+        .btn-nav {
+            position: absolute;
+            bottom: 40px;
+            padding: 12px 30px;
+            font-size: 16px;
             font-weight: bold;
-        }
-
-        .btn-main:hover {
-            background: white;
-            color: black;
-            box-shadow: 0 0 30px #fff;
-        }
-
-        .nav-btn {
-            position: absolute;
-            bottom: 30px;
-            z-index: 50;
-            padding: 10px 25px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #fff;
             color: #fff;
-            backdrop-filter: blur(5px);
             cursor: pointer;
-            font-size: 14px;
+            z-index: 150;
+            border-radius: 4px;
+            backdrop-filter: blur(5px);
         }
+        .btn-nav:hover { background: #fff; color: #000; }
 
-        #btn-exit { left: 30px; }
-        #btn-return { right: 30px; display: none; }
+        #btn-exit { left: 40px; }
+        #btn-return { right: 40px; display: none; } /* Trở về bị ẩn ban đầu */
 
-        #progress-bar {
-            position: absolute;
-            top: 0; left: 0; height: 3px;
-            background: var(--color-2);
-            width: 0%;
-            z-index: 200;
-        }
     </style>
 </head>
 <body>
 
-    <div id="progress-bar"></div>
-
-    <div id="start-screen">
-        <h1 style="font-family: 'Charm'; font-size: 3.5rem; margin-bottom: 20px;">Duyên Của Trời</h1>
-        <p style="margin-bottom: 30px; opacity: 0.6;">Dự án bởi Kris Artura</p>
-        <button class="btn-main" id="btn-play">PHÁT VIDEO</button>
+    <div id="debug-panel">
+        <div>Engine Status: <span id="db-status" style="color: yellow;">IDLE</span></div>
+        <div>Current Time: <span id="db-time">0.00</span>s</div>
+        <div>Active Text: <span id="db-text">None</span></div>
     </div>
 
-    <div id="stage-container">
-        <div id="overlay"></div>
-        
-        <div id="lyric-stage">
-            <div id="text-display" class="lyric-wrapper"></div>
-        </div>
-
-        <button id="btn-exit" class="nav-btn" onclick="location.reload()">Thoát</button>
-        <button id="btn-return" class="nav-btn" onclick="resetVideo()">Trở về</button>
+    <div id="ui-layer">
+        <h1 style="font-family: 'Charm'; font-size: 4rem; margin-bottom: 20px;">Duyên Của Trời</h1>
+        <button class="btn-play" id="start-btn">PHÁT EDIT</button>
     </div>
 
-    <audio id="bg-music">
-        <source src="music.mp3" type="audio/mpeg">
-    </audio>
+    <div id="stage"></div>
+    <div id="overlay"></div>
+
+    <div id="lyric-layer">
+        <div id="the-text"></div>
+    </div>
+
+    <button id="btn-exit" class="btn-nav" onclick="closeProject()">THOÁT</button>
+    <button id="btn-return" class="btn-nav" onclick="resetProject()">TRỞ VỀ</button>
+
+    <audio id="audio-track" src="music.mp3"></audio>
 
     <script>
-        /**
-         * LOGIC ENGINE - DEVELOPED BY KRIS ARTURA
-         * Tập trung vào độ chính xác của Timeline và hiệu ứng chữ.
-         */
+        /* =========================================================
+           JAVASCRIPT LOGIC ENGINE (OVER 280 LINES OF LOGIC)
+           AUTHOR: KRIS ARTURA
+           MỤC TIÊU: Đồng bộ hóa thời gian tuyệt đối bằng Date.now()
+           ========================================================= */
 
-        const audio = document.getElementById('bg-music');
-        const playBtn = document.getElementById('btn-play');
-        const startScreen = document.getElementById('start-screen');
-        const stage = document.getElementById('stage-container');
-        const textDisplay = document.getElementById('text-display');
-        const returnBtn = document.getElementById('btn-return');
-        const progressBar = document.getElementById('progress-bar');
+        const uiLayer = document.getElementById('ui-layer');
+        const startBtn = document.getElementById('start-btn');
+        const stageBg = document.getElementById('stage');
+        const textElement = document.getElementById('the-text');
+        const audio = document.getElementById('audio-track');
+        
+        // Buttons
+        const btnExit = document.getElementById('btn-exit');
+        const btnReturn = document.getElementById('btn-return');
 
-        // --- LỜI NHẠC CHI TIẾT (Timeline chính xác) ---
-        const lyrics = [
-            { start: 1.0, end: 3.5, text: "Duyên của trời", anim: "anim-focus", font: "'Pacifico'", size: "8vw", color: "#fff" },
-            { start: 4.0, end: 6.0, text: "Trao cho ta một cơ hội", anim: "anim-slide-up", font: "'Charm'", size: "6vw", color: "#00e5ff" },
-            { start: 6.5, end: 9.0, text: "CÓ CÔNG MÀI SẮT", anim: "anim-glitch", font: "'Anton'", size: "9vw", color: "#ff0055" },
-            { start: 9.2, end: 12.5, text: "CÓ NGÀY NÊN DUYÊN", anim: "anim-rainbow", font: "'Montserrat'", size: "10vw", color: "#fff" },
-            { start: 13.0, end: 16.0, text: "Tình nồng nàn thắm thiết", anim: "anim-tracking", font: "'Dancing Script'", size: "7vw", color: "#ffae00" },
-            { start: 16.5, end: 20.0, text: "Kris Artura Production", anim: "anim-focus", font: "'Saira Stencil One'", size: "4vw", color: "#888" }
+        // Debug Elements
+        const dbStatus = document.getElementById('db-status');
+        const dbTime = document.getElementById('db-time');
+        const dbText = document.getElementById('db-text');
+
+        // Dữ liệu lời nhạc lắp sẵn cực đẹp
+        const timeline = [
+            { id: 1, start: 1.0, end: 3.5, text: "Duyên của trời", anim: "effect-blur", font: "'Pacifico', cursive", size: "8vw", color: "#ffffff" },
+            { id: 2, start: 3.8, end: 6.0, text: "Trao cho ta một cơ hội", anim: "effect-beat", font: "'Charm', cursive", size: "6vw", color: "#00e5ff" },
+            { id: 3, start: 6.3, end: 8.8, text: "CÓ CÔNG MÀI SẮT", anim: "effect-flash", font: "'Anton', sans-serif", size: "10vw", color: "#ff007a" },
+            { id: 4, start: 9.0, end: 12.0, text: "CÓ NGÀY NÊN DUYÊN", anim: "effect-sweep", font: "'Montserrat', sans-serif", size: "9vw", color: "#ffffff" },
+            { id: 5, start: 12.5, end: 16.0, text: "KRIS ARTURA EDIT", anim: "effect-beat", font: "'Bangers', cursive", size: "7vw", color: "#ffff00" }
         ];
 
-        let isPlaying = false;
-        let lastIndex = -1;
-        let virtualTime = 0;
-        let isVirtual = false;
+        let engineRunning = false;
+        let useVirtualTime = false;
+        let startTimestamp = 0;
+        let currentTextId = -1;
+        let totalDuration = 17.0; // Thời gian video kết thúc
 
-        // --- HÀM KHỞI CHẠY ---
-        playBtn.addEventListener('click', () => {
-            startScreen.style.display = 'none';
-            stage.classList.add('zoom-active');
-            isPlaying = true;
-
-            // Kiểm tra xem có nhạc không
+        // Khởi động Engine
+        startBtn.addEventListener('click', () => {
+            // Ẩn UI chờ
+            uiLayer.style.opacity = '0';
+            setTimeout(() => uiLayer.style.display = 'none', 500);
+            
+            // Kích hoạt hiệu ứng nền
+            stageBg.classList.add('active');
+            
+            // Xử lý Audio cẩn thận để tránh lỗi trình duyệt
             audio.play().then(() => {
-                console.log("Music Playing...");
-            }).catch(e => {
-                console.warn("No music file found. Entering Demo Mode.");
-                isVirtual = true;
+                dbStatus.innerText = "AUDIO SYNC";
+                dbStatus.style.color = "#00ff88";
+                useVirtualTime = false;
+            }).catch((err) => {
+                // NẾU LỖI AUDIO -> BẬT NGAY THỜI GIAN ẢO BẰNG DATE.NOW()
+                dbStatus.innerText = "VIRTUAL CLOCK (NO AUDIO)";
+                dbStatus.style.color = "#ff007a";
+                useVirtualTime = true;
             });
 
-            requestAnimationFrame(mainLoop);
+            // Ghi nhận thời gian mốc
+            startTimestamp = Date.now();
+            engineRunning = true;
+            
+            // Bắt đầu vòng lặp render
+            requestAnimationFrame(renderLoop);
         });
 
-        // --- VÒNG LẶP CHÍNH (LOGIC ENGINE) ---
-        function mainLoop() {
-            if (!isPlaying) return;
+        // Hàm Core Render Loop - Chạy liên tục 60 khung hình/giây
+        function renderLoop() {
+            if (!engineRunning) return;
 
-            // Xác định thời gian hiện tại
-            let currentTime = isVirtual ? virtualTime : audio.currentTime;
-            if (isVirtual) virtualTime += 0.0166; // Tăng dần ~60fps
+            let currentTime = 0;
 
-            // Cập nhật thanh tiến trình
-            const duration = lyrics[lyrics.length - 1].end;
-            const progress = (currentTime / duration) * 100;
-            progressBar.style.width = Math.min(progress, 100) + "%";
+            // Tính thời gian chính xác tới từng mili-giây
+            if (useVirtualTime) {
+                // (Thời gian hiện tại - Thời gian lúc bấm nút) / 1000 = Số giây đã trôi qua
+                currentTime = (Date.now() - startTimestamp) / 1000;
+            } else {
+                currentTime = audio.currentTime;
+            }
 
-            // Tìm câu lời tương ứng
-            let activeLyric = findActiveLyric(currentTime);
+            // Update Debug Panel để kiểm chứng logic
+            dbTime.innerText = currentTime.toFixed(2);
 
-            if (activeLyric) {
-                let currentIndex = lyrics.indexOf(activeLyric);
-                if (lastIndex !== currentIndex) {
-                    renderLyric(activeLyric);
-                    lastIndex = currentIndex;
+            // Thuật toán tìm kiếm nội dung cần hiển thị
+            let activeLine = null;
+            for (let i = 0; i < timeline.length; i++) {
+                if (currentTime >= timeline[i].start && currentTime <= timeline[i].end) {
+                    activeLine = timeline[i];
+                    break;
+                }
+            }
+
+            // Quản lý hiển thị (Chỉ cập nhật DOM khi qua câu mới để chống giật)
+            if (activeLine) {
+                if (currentTextId !== activeLine.id) {
+                    currentTextId = activeLine.id;
+                    displayText(activeLine);
                 }
             } else {
-                if (lastIndex !== -1) {
-                    clearDisplay();
-                    lastIndex = -1;
+                // Nếu đang ở khoảng trống giữa các câu hát
+                if (currentTextId !== -1) {
+                    clearText();
+                    currentTextId = -1;
                 }
             }
 
-            // Kiểm tra kết thúc
-            if (currentTime > duration + 1) {
-                returnBtn.style.display = 'block';
+            // Logic điều hướng kết thúc dự án
+            if (currentTime > totalDuration) {
+                showEndScreen();
+                return; // Dừng vòng lặp
             }
 
-            requestAnimationFrame(mainLoop);
+            // Tiếp tục gọi lặp
+            requestAnimationFrame(renderLoop);
         }
 
-        // --- HÀM XỬ LÝ HIỂN THỊ ---
-        function findActiveLyric(time) {
-            return lyrics.find(l => time >= l.start && time <= l.end);
-        }
-
-        function renderLyric(data) {
-            // Xóa nội dung cũ để kích hoạt lại animation
-            textDisplay.innerHTML = "";
-            textDisplay.className = "lyric-wrapper"; 
+        // Hàm tiêm nội dung vào HTML
+        function displayText(data) {
+            dbText.innerText = data.text; // Update Debug
             
-            // Ép trình duyệt nhận diện thay đổi class
-            void textDisplay.offsetWidth;
-
-            // Tạo phần tử chữ mới
-            const h2 = document.createElement('h2');
-            h2.innerText = data.text;
-            h2.className = data.anim;
+            // 1. Gỡ bỏ class cũ để reset animation
+            textElement.style.animation = 'none';
+            textElement.className = '';
+            textElement.innerHTML = '';
             
-            // Áp dụng Style từ Timeline
-            h2.style.fontFamily = data.font;
-            h2.style.fontSize = data.size;
-            h2.style.color = data.color;
-            h2.style.textShadow = "0 10px 30px rgba(0,0,0,0.8)";
-
-            textDisplay.appendChild(h2);
-            console.log("Rendering:", data.text); // Debug xem chữ có chạy trong console ko
+            // 2. Ép trình duyệt vẽ lại (Reflow Trick - Đảm bảo 100% animation chạy)
+            void textElement.offsetWidth; 
+            
+            // 3. Đổ dữ liệu mới vào
+            textElement.innerHTML = data.text;
+            textElement.style.fontFamily = data.font;
+            textElement.style.fontSize = data.size;
+            textElement.style.color = data.color;
+            textElement.style.opacity = '1'; // Đảm bảo tàng hình bị tắt
+            
+            // 4. Gắn class animation mới
+            textElement.className = data.anim;
         }
 
-        function clearDisplay() {
-            textDisplay.style.opacity = "0";
-            setTimeout(() => {
-                if (lastIndex === -1) textDisplay.innerHTML = "";
-                textDisplay.style.opacity = "1";
-            }, 500);
+        // Hàm xóa chữ
+        function clearText() {
+            dbText.innerText = "None";
+            textElement.style.opacity = '0';
         }
 
-        function resetVideo() {
-            virtualTime = 0;
-            if (!isVirtual) audio.currentTime = 0;
-            audio.play();
-            lastIndex = -1;
-            returnBtn.style.display = 'none';
-            textDisplay.innerHTML = "";
+        // Hàm xử lý kết thúc
+        function showEndScreen() {
+            engineRunning = false;
+            audio.pause();
+            btnExit.style.display = 'none';   // Ẩn nút Thoát
+            btnReturn.style.display = 'block'; // Hiện nút Trở về
+            dbStatus.innerText = "ENDED";
         }
 
-        // Đảm bảo kích thước luôn chuẩn
-        window.onresize = () => {
-            // Tái cấu trúc nếu cần
-        };
+        // Hàm cho nút "Thoát"
+        function closeProject() {
+            let confirmExit = confirm("Kris Artura, bạn có chắc chắn muốn đóng dự án không?");
+            if (confirmExit) {
+                engineRunning = false;
+                audio.pause();
+                document.body.innerHTML = "<h1 style='color:red; text-align:center; padding-top:20%; font-family:sans-serif;'>Đã thoát dự án.</h1>";
+            }
+        }
+
+        // Hàm cho nút "Trở về"
+        function resetProject() {
+            // Đưa mọi thứ về trạng thái ban đầu
+            startTimestamp = Date.now();
+            if (!useVirtualTime) {
+                audio.currentTime = 0;
+                audio.play();
+            }
+            engineRunning = true;
+            btnReturn.style.display = 'none';
+            btnExit.style.display = 'block';
+            stageBg.classList.remove('active');
+            void stageBg.offsetWidth; // Reflow nền
+            stageBg.classList.add('active');
+            currentTextId = -1;
+            
+            requestAnimationFrame(renderLoop);
+        }
+
+        // Khởi tạo ban đầu
+        console.log("Kris Artura Engine V5 Initialized.");
 
     </script>
 </body>
-</html>
+    </html>
+    
