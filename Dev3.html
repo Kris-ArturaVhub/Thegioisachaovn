@@ -167,14 +167,14 @@ class Asteroid {
         if (this.isHardcore) {
             // Hardcore: Quỹ đạo mưa sao băng chéo, nhanh hơn
             this.x = Math.random() * (canvas.width * 1.5);
-            let baseSpeed = Math.random() * 4 + 5;
+            let baseSpeed = Math.random() * 3.5 + 5;
             this.vy = baseSpeed * difficultyMultiplier;
             this.vx = -this.vy * 0.4; 
             this.isSin = false;
         } else {
             // Normal: Rơi thẳng, bay xiên, hoặc lượn sóng đa dạng
             this.x = Math.random() * (canvas.width - this.r * 2) + this.r;
-            let baseSpeed = Math.random() * 2.5 + 2.5;
+            let baseSpeed = Math.random() * 2.1 + 2.5;
             this.vy = baseSpeed * difficultyMultiplier;
             
             let moveType = Math.random();
@@ -201,7 +201,7 @@ class Asteroid {
         this.y += this.vy;
         
         if (this.isSin && !this.isHardcore) {
-            this.x = this.baseX + Math.sin(this.y * 0.02 + this.sinOffset) * 40;
+            this.x = this.baseX + Math.sin(this.y * 0.005 + this.sinOffset) * 60;
         } else {
             this.x += this.vx;
         }
